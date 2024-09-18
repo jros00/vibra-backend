@@ -1,13 +1,15 @@
-FOR NEW APP DEVELOPERS:
+# To install dependencies:
+    
+    1. Install dependencies: `python -m venv .venv` and `source .venv/bin/activate`and then `pip install -r requirements.txt``
 
-    Run this once when cloning the repo: `python manage.py migrate` (sets up the initial db schema in sqllite)
+    2. Run this ONCE: `python manage.py migrate` (sets up the initial db schema in sqllite)
 
-    To START the server, run: `python manage.py runserver 0.0.0.0:8000` 
+    3. To START the server, run: `python manage.py runserver 0.0.0.0:8000` 
     
     (Running on 0.0.0.0 makes the server accessible over your local network, which is necessary for testing on your iPhone.)
 
 
-LOG:
+### LOG:
 
     Step 1. Initialized a new Django project named vibra_backend: `django-admin startproject vibra_backend .`` (DONE)
 
