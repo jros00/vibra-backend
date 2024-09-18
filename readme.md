@@ -1,15 +1,16 @@
-# To install dependencies:
+# The core of VIBRA's backend.
+
+## Installation Process (IMPORTANT):
     
     1. Install dependencies: `python -m venv .venv` and `source .venv/bin/activate`and then `pip install -r requirements.txt``
-
     2. Run this ONCE: `python manage.py migrate` (sets up the initial db schema in sqllite)
-
     3. To START the server, run: `python manage.py runserver 0.0.0.0:8000` 
+    4. NOTE: Ideally, create a new branch by your name i.e. 'Johannes' and work and commit on this branch.
     
     (Running on 0.0.0.0 makes the server accessible over your local network, which is necessary for testing on your iPhone.)
 
 
-### LOG:
+## LOG:
 
     Step 1. Initialized a new Django project named vibra_backend: `django-admin startproject vibra_backend .`` (DONE)
 
