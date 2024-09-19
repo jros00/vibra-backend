@@ -2,8 +2,8 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from home.models import UserActivity, VisualContent, Song
-from common.ml_utils import load_model  # Import the load_model function
+from core.models import UserActivity, VisualContent, Song
+from ml_tools_app.ml_utils import load_model  # Import the load_model function
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.dispatch import receiver
 

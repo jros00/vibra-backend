@@ -2,7 +2,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from home.models import VisualContent
+from core.models import VisualContent
 
 class ChangeMoodView(APIView):
     def post(self, request):

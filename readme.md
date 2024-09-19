@@ -16,7 +16,7 @@
 
     Step 2. Create Separate Domain Specific Django Apps for Each Major Functionality: 
         python manage.py startapp home (DONE)
-        python manage.py startapp for_you (NOT YET)
+        python manage.py startapp for_you (DONE)
         python manage.py startapp profile (NOT YET)
 
     Step 3. Apply Migrations:

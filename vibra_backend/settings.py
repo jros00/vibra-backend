@@ -44,6 +44,9 @@ INSTALLED_APPS = [
     'corsheaders',
     # Our apps
     'home',
+    'core',
+    'ml_tools_app',
+    'for_you'
 ]
 
 MIDDLEWARE = [
