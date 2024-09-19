@@ -144,5 +144,7 @@ REST_FRAMEWORK = {
 
 ALLOWED_HOSTS = [my_ip, 'localhost']
 
-
+# Media files (for uploads such as MP3 files)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 

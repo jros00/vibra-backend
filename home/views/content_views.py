@@ -2,8 +2,29 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from home.models import *
+from home.models import UserActivity, VisualContent, Song
 from common.ml_utils import load_model  # Import the load_model function
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.dispatch import receiver
+
+
+#@login_required
+def user_viewed_articles(request):
+    # Query the ContentView model for the current user's viewed articles
+    content_views = ContentView.objects.filter(user=request.user).select_related('content').order_by('-timestamp')
+    
+    # Prepare a list of viewed articles with relevant data
+    viewed_articles_data = [
+        {
+            'title': view.content.title,
+            'id': view.content.id,
+            'viewed_on': view.timestamp,
+        }
+        for view in content_views
+    ]
+    
+    # Return the data as a JSON response
+    return JsonResponse(viewed_articles_data, safe=False)
 
 class PredictionView(APIView):
     def get(self, request):
@@ -11,12 +32,12 @@ class PredictionView(APIView):
         current_mood = request.session.get('mood', 'neutral')
         
         # Filter content based on the mood (assuming the VisualContent model has a 'mood' field)
-        content = VisualContent.objects.filter(mood=current_mood)
-        
+        #content = VisualContent.objects.filter(mood=current_mood)
+        content = Song.objects
         # Return the mood-specific content
         return Response({
             "mood": current_mood,
-            "content": list(content.values('title', 'image')),
+            "content": list(content.values('title')),
         })
 
     def post(self, request):
