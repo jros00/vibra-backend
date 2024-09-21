@@ -16,13 +16,29 @@ class Artist(models.Model):
         return self.name
 
 class Song(models.Model):
-    title = models.CharField(max_length=100)
-    mp3_file = models.FileField(upload_to='mp3s/')  # This uploads the file to media/mp3s
-    artist = models.ForeignKey(Artist, on_delete=models.CASCADE, null=True, blank=True, default=None)
-    uploaded_at = models.DateTimeField(default=timezone.now)
-    def __str__(self):
-        return self.title
+    # Metadata Fields
+    clip_id = models.IntegerField(unique=True, default=0)
+    track_number = models.CharField(max_length=10, default='0')
+    title = models.CharField(max_length=255, default='Unknown Title')
+    artist = models.CharField(max_length=255, default='Unknown Artist')
+    album = models.CharField(max_length=255, null=True, blank=True, default='Unknown Album')
+    url = models.URLField(default='http://example.com') # Refers to an artist or album page
+    segment_start = models.IntegerField(default=0)
+    segment_end = models.IntegerField(default=0)
+    original_url = models.URLField(default='http://example.com') # Direct link to the specific audio clip
+    mp3_path = models.CharField(max_length=500, default='Unknown Path')
 
+    # Simple tags as a ManyToManyField
+    tags = models.ManyToManyField('Tag')
+
+    def __str__(self):
+        return f"{self.artist} - {self.title}"
+class Tag(models.Model):
+    name = models.CharField(max_length=100, default='Unknown Tag')
+    votes = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.name} ({self.votes} votes)"
 class VisualContent(models.Model):
     title = models.CharField(max_length=100)
     image = models.ImageField(upload_to='visual_content/')
