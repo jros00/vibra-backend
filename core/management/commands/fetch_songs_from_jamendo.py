@@ -64,15 +64,15 @@ class Command(BaseCommand):
                             'track_title': track_title,
                             'artist_name': artist_name,
                             'album_name': album_name,
+                            'album_id': album_id,
                             'album_image': album_image,
+                            'artist_id': artist_id,
                             'audio_url': audio_url,
                             'duration': duration,
                             'release_date': release_date,
                             'genre': genre,
                             'share_url': share_url,
                             'license_url': license_url,
-                            'album_id': album_id,
-                            'artist_id': artist_id
                         }
                     )
 

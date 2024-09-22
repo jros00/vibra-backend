@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     # Our apps
     'home',
     'core',
-    'ml_tools_app',
     'for_you'
 ]
 
