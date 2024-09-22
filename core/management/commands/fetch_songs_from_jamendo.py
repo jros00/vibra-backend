@@ -6,24 +6,24 @@ import librosa
 from pydub import AudioSegment
 import io
 
-API_KEY = '0989ca22'  # Key that I have created on the Jamendo website for our Vibra project
-LIMIT_PER_REQUEST = 10 #200 is the maximum tracks per request allowed by the Jamendo API
+API_KEY = '0989ca22'
+LIMIT_PER_REQUEST = 10  # Maximum tracks per request allowed by the Jamendo API
 TOTAL_TRACKS_NEEDED = 10  # Set the total number of tracks to fetch
 
 class Command(BaseCommand):
     help = 'Fetch songs from the Jamendo API, store them in the database, and process audio features directly from the URL.'
-    
+
     def handle(self, *args, **kwargs):
         url = 'https://api.jamendo.com/v3.0/tracks'
-        tracks_fetched = 0  # Track how many tracks we’ve fetched so far
-        
+        tracks_fetched = 0
+
         for offset in range(0, TOTAL_TRACKS_NEEDED, LIMIT_PER_REQUEST):
             params = {
                 'client_id': API_KEY,
                 'format': 'json',
                 'limit': LIMIT_PER_REQUEST,
                 'offset': offset,
-                'include': 'musicinfo+licenses'  # Include more details in the API response
+                'include': 'musicinfo+licenses'  # Include additional fields
             }
 
             response = requests.get(url, params=params)
@@ -32,33 +32,47 @@ class Command(BaseCommand):
                 data = response.json()
                 tracks = data.get('results', [])
                 tracks_fetched += len(tracks)
-                
+
                 for track in tracks:
-                    # Print full track details for debugging
-                    print(f"Track details: {track}")
-                    
                     track_id = track['id']
                     track_title = track['name']
                     artist_name = track['artist_name']
+                    album_name = track.get('album_name', None)
+                    album_id = track.get('album_id', None)
+                    album_image = track.get('image', None)
+                    artist_id = track.get('artist_id', None)
                     genre = track.get('musicinfo', {}).get('tags', [])
                     duration = track['duration']
-                    
-                    # Check for audio URL fields (try 'audio' and 'audiodownload')
+                    release_date = track.get('releasedate', None)
                     audio_url = track.get('audio', '') or track.get('audiodownload', '')
-                    
+                    share_url = track.get('shareurl', None)
+
+                    # Safely handle the licenses field
+                    licenses = track.get('licenses', [])
+                    license_url = None
+                    if isinstance(licenses, list) and len(licenses) > 0:
+                        license_url = licenses[0].get('buyurl', None)
+
                     if not audio_url:
                         self.stdout.write(self.style.ERROR(f"Track {track_title} does not have a valid audio URL."))
                         continue
 
                     # Save or update the track metadata in the Django Track model
-                    track_obj, created = Track.objects.get_or_create(
+                    track_obj, created = Track.objects.update_or_create(
                         track_id=track_id,
                         defaults={
                             'track_title': track_title,
                             'artist_name': artist_name,
-                            'genre': genre,
+                            'album_name': album_name,
+                            'album_image': album_image,
+                            'audio_url': audio_url,
                             'duration': duration,
-                            'audio_url': audio_url  # Save the external URL for audio
+                            'release_date': release_date,
+                            'genre': genre,
+                            'share_url': share_url,
+                            'license_url': license_url,
+                            'album_id': album_id,
+                            'artist_id': artist_id
                         }
                     )
 
@@ -74,9 +88,9 @@ class Command(BaseCommand):
                             AudioFeature.objects.update_or_create(
                                 track=track_obj,
                                 defaults={
-                                    'mfcc_mean': mfcc_mean,  # Save MFCC
-                                    'tempo': tempo,  # Save tempo
-                                    'chroma_mean': chroma_mean  # Save chroma features
+                                    'mfcc_mean': mfcc_mean,
+                                    'tempo': tempo,
+                                    'chroma_mean': chroma_mean
                                 }
                             )
                             self.stdout.write(self.style.SUCCESS(f"Audio features saved for {track_obj.track_id}."))
@@ -90,7 +104,7 @@ class Command(BaseCommand):
                     break
             else:
                 self.stdout.write(self.style.ERROR(f"Failed to fetch data: {response.status_code}"))
-                break  # Exit the loop if the request fails
+                break
 
     def process_audio_from_url(self, audio_url):
         """
@@ -103,16 +117,9 @@ class Command(BaseCommand):
                 print(f"Streaming audio from {audio_url}...")
                 audio_data = io.BytesIO(response.content)
                 
-                # Debug: Check the format or content type of the file
-                content_type = response.headers.get('Content-Type', '')
-                print(f"Content-Type: {content_type}")
-                
-                # Dynamically handle the audio format based on the content type
-                file_format = "mp3" if "mpeg" in content_type else content_type.split("/")[-1]
-                
                 # Convert the audio stream to WAV using pydub (in memory)
                 try:
-                    audio_segment = AudioSegment.from_file(audio_data, format=file_format)
+                    audio_segment = AudioSegment.from_file(audio_data, format="mp3")
                     wav_io = io.BytesIO()
                     audio_segment.export(wav_io, format="wav")  # Convert to WAV in memory
                     wav_io.seek(0)  # Reset the BytesIO stream to the beginning

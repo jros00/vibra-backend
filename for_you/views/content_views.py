@@ -46,16 +46,18 @@ class PredictionViewSet(viewsets.ViewSet):
         # Sort by similarity (lower distance = more similar)
         similar_tracks = sorted(similar_tracks, key=lambda x: x[1])[:5]  # Top 5 similar tracks
 
-        # Prepare the response with similar tracks, using Jamendo URLs instead of local URLs
+        # Prepare the response with similar tracks, including the track image (album_image) and using Jamendo URLs instead of local URLs
         return Response({
             "track_title": current_track.track_title,
             "audio_url": current_track.audio_url,  # Jamendo URL for the current track
+            "album_image": current_track.album_image,  # Return album image (track image)
             "similar_tracks": [
                 {
                     "track_id": t[0].track_id,
                     "track_title": t[0].track_title,
                     "artist_name": t[0].artist_name,
                     "audio_url": t[0].audio_url,  # Jamendo URL for similar tracks
+                    "album_image": t[0].album_image,  # Return album image (track image) for similar tracks
                     "distance": t[1]
                 } for t in similar_tracks
             ]
