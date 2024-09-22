@@ -14,9 +14,38 @@ from django.shortcuts import get_object_or_404
 logger = logging.getLogger(__name__)
 
 class FetchTrackView(viewsets.ViewSet):
-    '''Fetch a specific track by its track_id.'''
-    
+    def retrieve(self, request, pk=None):
+        try:
+            track = Track.objects.get(track_id=track_id)
+        except Track.DoesNotExist:
+            return {"error": "Track not found", "status": status.HTTP_404_NOT_FOUND}
+
+        try:
+            audio_feature = AudioFeature.objects.get(track=track)
+        except AudioFeature.DoesNotExist:
+            return {"error": "Audio features not found", "status": status.HTTP_404_NOT_FOUND}
+
+        # Return a dictionary of data that will be used in the Response object
+        return {
+            "track_id": track.track_id,
+            "title": track.track_title,
+            "audio_url": track.audio_url,
+            "album_image": track.album_image,
+            "album_name": track.album_name,
+            "audio_features": {
+                "chroma_mean": audio_feature.chroma_mean,
+                "tempo": audio_feature.tempo,
+                "mfcc_mean": audio_feature.mfcc_mean
+            }
+        }
+ 
+
+class FetchRecommendedTracksView(viewsets.ViewSet):
+
+    # NOTE: To be made much more complex later, for now just based on previously listened song
+
     def create(self, request: Request):
+        # Read 'track_id' from the POST request body
         track_id = request.data.get('track_id')
         track = get_object_or_404(Track, track_id=track_id)
         serializer = TrackSerializer(track, partial=True)
