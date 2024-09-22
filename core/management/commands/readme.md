@@ -19,12 +19,12 @@ Start the server
 
 ### Step 4. 
 Navigate to a specific track
-In the url field: type http://localhost:8000/api/for_you/predict/trackid/predict/
+In the url field: type http://localhost:8000/api/for_you/trackid/
 Where track id is the id of a specific track you have downloaded
 
 For example:
 
-    http://localhost:8000/api/for_you/predict/241/predict/
+    http://localhost:8000/api/for_you/241/
 
 This will provide you with the link to the specific track and the link to the five most similar tracks among the ones that you have extracted the data from. If you click on one of the links, it will play the requested song directly in the browser. In this way we don't need to store the actual audio files locally. We can use only the audio features for machine learning pruposes which will require a lot less memory. Still a lot of memory is needed.
 

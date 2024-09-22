@@ -15,8 +15,7 @@ from core.utils import euclidean_distance
 
 class PredictionViewSet(viewsets.ViewSet):
 
-    @action(detail=True, methods=['get'])
-    def predict(self, request, pk=None):
+    def retrieve(self, request, pk=None):
         try:
             # Fetch the track by ID
             current_track = Track.objects.get(track_id=pk)

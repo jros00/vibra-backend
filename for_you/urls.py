@@ -5,12 +5,11 @@ from .views.mood_views import ChangeMoodView
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
-router.register(r'predict', PredictionViewSet, basename='predict')
+router.register(r'for_you', PredictionViewSet, basename='for_you')
 
 urlpatterns = [
-    #path('content/', PredictionView.as_view(), name='content'),
+    path('api/', include(router.urls)),
     path('advertisements/', AdvertisementView.as_view(), name='home'),
     path('change-mood/', ChangeMoodView.as_view(), name='mood'),
-    #path('predict/<str:track_id>/', PredictionView.as_view(), name='predict_tracks'), 
     path('', include(router.urls)),
 ]
