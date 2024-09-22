@@ -10,6 +10,7 @@ from core.utils import euclidean_distance, cosine_distance
 
 class FetchTrackView(viewsets.ViewSet):
 
+<<<<<<< HEAD
     # NOTE: create method: This is the correct method for POST in Django REST Framework.
     #  When a POST request is made to this view, the create method will be called.
 
@@ -32,6 +33,9 @@ class FetchTrackView(viewsets.ViewSet):
         return Response(results, status=status.HTTP_200_OK)
 
     def process_track(self, track_id):
+=======
+    def retrieve(self, request, pk=None):
+>>>>>>> 8198455 (Have changed the urls to the different tracks to be more intuitive and to not contain the word "predict" in it)
         try:
             track = Track.objects.get(track_id=track_id)
         except Track.DoesNotExist:
