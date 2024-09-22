@@ -11,7 +11,7 @@ import numpy as np
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework import viewsets
-from core.utils import euclidean_distance
+from core.utils import euclidean_distance, cosine_distance
 
 class PredictionViewSet(viewsets.ViewSet):
 
@@ -36,8 +36,10 @@ class PredictionViewSet(viewsets.ViewSet):
             try:
                 # Get the audio features of each track
                 audio_feature = AudioFeature.objects.get(track=track)
-                # Calculate the Euclidean distance between MFCCs
-                distance = euclidean_distance(current_audio_feature.mfcc_mean, audio_feature.mfcc_mean)
+                # Calculate the Cosinus distance between all the features
+                distance = cosine_distance(current_audio_feature.mfcc_mean, audio_feature.mfcc_mean)
+                distance += cosine_distance(current_audio_feature.tempo, audio_feature.tempo)
+                distance += cosine_distance(current_audio_feature.chroma_mean, audio_feature.chroma_mean)
                 similar_tracks.append((track, distance))
             except AudioFeature.DoesNotExist:
                 # Skip if the track doesn't have audio features
