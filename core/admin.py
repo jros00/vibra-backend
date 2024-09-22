@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
-from core.models import UserActivity, Artist, Song, VisualContent, ContentView, SongView
+from core.models import UserActivity, Artist, Song, VisualContent, ContentView, SongView, Track, AudioFeature
 
 # Register your models here.
 admin.site.unregister(User)  # Unregister default User
@@ -12,3 +12,5 @@ admin.site.register(Song)
 admin.site.register(VisualContent)
 admin.site.register(ContentView)
 admin.site.register(SongView)
+admin.site.register(Track)
+admin.site.register(AudioFeature)

@@ -1,7 +1,28 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+class Track(models.Model):
+    track_id = models.CharField(max_length=255, unique=True)
+    track_title = models.CharField(max_length=255)
+    artist_name = models.CharField(max_length=255)
+    genre = models.CharField(max_length=100, null=True, blank=True)
+    duration = models.IntegerField()  # Duration in seconds
+    audio_url = models.URLField()  # URL to stream or download the track
 
+    def __str__(self):
+        return self.track_title
+    
+class AudioFeature(models.Model):
+    track = models.OneToOneField(Track, on_delete=models.CASCADE)
+    mfcc_mean = models.JSONField()  # Store MFCC as a JSON field
+    tempo = models.FloatField()
+    chroma_mean = models.JSONField(blank=True, null=True)  # Store chroma features as a JSON field
+
+    def __str__(self):
+        return f"Audio features for {self.track.track_title}"
+
+    def __str__(self):
+        return self.track_title
 class UserActivity(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     activity_type = models.CharField(max_length=100)  # the built-in user function can track loggin in and loggin (and time) out but not which content the user has interacted with
