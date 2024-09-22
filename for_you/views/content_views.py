@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from core.models import UserActivity, VisualContent, Song, Track, AudioFeature, ContentView
 
-from ml_tools_app.ml_utils import load_model  # Import the load_model function
+from core.utils import load_model  # Import the load_model function
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.dispatch import receiver
 import numpy as np

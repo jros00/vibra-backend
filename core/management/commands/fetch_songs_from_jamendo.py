@@ -6,8 +6,8 @@ import librosa
 from pydub import AudioSegment
 import io
 
-API_KEY = '0989ca22'
-LIMIT_PER_REQUEST = 10  # Maximum tracks per request allowed by the Jamendo API
+API_KEY = '0989ca22'  # Key that I have created on the Jamendo website for our Vibra project
+LIMIT_PER_REQUEST = 10  # 200 are the maximum tracks per request allowed by the Jamendo API
 TOTAL_TRACKS_NEEDED = 10  # Set the total number of tracks to fetch
 
 class Command(BaseCommand):
