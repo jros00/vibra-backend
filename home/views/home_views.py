@@ -1,14 +1,15 @@
 # General home-related views
 
 from django.shortcuts import render
-from rest_framework.views import APIView
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 
-class HomeView(APIView):
-    def get(self, request):
+class WelcomeView(viewsets.ViewSet):
+
+    def list(self, request):
         # Prepare the data to return
         data = {
-            "message": "Welcome to Vibra App!",
+            "message": "Welcome to Vibra!",
         }
 
-        return Response(data)
+        return Response(data, status=status.HTTP_200_OK)
