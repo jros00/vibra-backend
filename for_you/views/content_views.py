@@ -83,7 +83,23 @@ class FetchRecommendedTracksView(viewsets.ViewSet):
         
         results = self.fetch_similar_tracks(curr_track_results)
         return Response(results, status=status.HTTP_200_OK)
+    
 
+    def list(self, request: Request):
+        try:
+            track = Track.objects.get(id=1)
+        except Track.DoesNotExist:
+            return {"error": "Track not found", "status": status.HTTP_404_NOT_FOUND}
+        
+        # Call a helper method to process and return track data
+        track_processor = FetchTrackView()
+        track_results = track_processor.process_track(track.track_id)
+        if 'error' in track_results:
+            return Response(track_results, status=track_results.get('status', status.HTTP_400_BAD_REQUEST))
+
+        results = self.fetch_similar_tracks(track_results)
+        return Response(results, status=status.HTTP_200_OK)
+    
 
     def fetch_similar_tracks(self, curr_track_results):
         
@@ -120,27 +136,6 @@ class FetchRecommendedTracksView(viewsets.ViewSet):
             result.append(track_results)
         
         return result
-    
-
-class FirstTrackView(viewsets.ViewSet):
-
-    # NOTE: Placeholder method to just recieve a track to start with
-    # The list method is meant for handling GET requests to retrieve a collection or a default resource, 
-    # which doesn't require a pk in the URL. 
-
-    def list(self, request: Request):
-        try:
-            track = Track.objects.get(id=1)
-        except Track.DoesNotExist:
-            return {"error": "Track not found", "status": status.HTTP_404_NOT_FOUND}
-        
-        # Call a helper method to process and return track data
-        track_processor = FetchTrackView()
-        track_results = track_processor.process_track(track.track_id)
-        if 'error' in track_results:
-            return Response(track_results, status=track_results.get('status', status.HTTP_400_BAD_REQUEST))
-
-        return Response(track_results, status=status.HTTP_200_OK)
 
 
         
