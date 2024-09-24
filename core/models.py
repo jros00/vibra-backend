@@ -1,6 +1,5 @@
 from django.db import models
 
-
 class Track(models.Model):
     track_id = models.IntegerField(unique=True, primary_key=True)  # Unique track ID from Jamendo
     track_title = models.CharField(max_length=255)
@@ -28,6 +27,17 @@ class AudioFeature(models.Model):
     def __str__(self):
         return f"Audio features for {self.track.track_title}"
 
+class UserPreference(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    activity_type = models.CharField(max_length=100)  # the built-in user function can track loggin in and loggin (and time) out but not which content the user has interacted with
+    timestamp = models.DateTimeField(default=timezone.now)
+    track_id = models.ForeignKey(Track, on_delete=models.CASCADE)
+
+class ListeningHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField(default=timezone.now)
+    track_id = models.ForeignKey(Track, on_delete=models.CASCADE)
+    listening_time = models.DurationField(null=True, blank=True)
 
 class Artist(models.Model):
     name = models.CharField(max_length=50)
