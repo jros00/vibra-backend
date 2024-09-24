@@ -49,7 +49,15 @@ class FetchRecommendedTracksView(FetchTrackView):
         
         # Fetch all other tracks excluding the current one, along with their audio features
         all_tracks = Track.objects.exclude(track_id=curr_track_results["track_id"]).select_related('audiofeature')
+        track_id = request.data.get("track_id")
 
+        # If 'track_id' is not provided, return a 400 error response
+        if not track_id:
+            return Response({"error": "Missing track_id"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Call a helper method to process and return track data
+        track_processor = FetchTrackView()
+    
         similar_tracks = []
 
         # Ensure the current track has valid audio features
