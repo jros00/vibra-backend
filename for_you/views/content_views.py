@@ -5,12 +5,14 @@ from django.dispatch import receiver
 from django.shortcuts import render
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework import viewsets
-from core.utils import euclidean_distance, cosine_distance
+from core.utils import cosine_distance
+from rest_framework.request import Request
+from rest_framework.response import Response
+from core.models import AudioFeature, Track, UserActivity
+from core.utils import load_model  # Import the load_model function
 
 class FetchTrackView(viewsets.ViewSet):
 
-<<<<<<< HEAD
     # NOTE: create method: This is the correct method for POST in Django REST Framework.
     #  When a POST request is made to this view, the create method will be called.
 
@@ -32,10 +34,7 @@ class FetchTrackView(viewsets.ViewSet):
         # Send a success response (200 OK) with the data
         return Response(results, status=status.HTTP_200_OK)
 
-    def process_track(self, track_id):
-=======
     def retrieve(self, request, pk=None):
->>>>>>> 8198455 (Have changed the urls to the different tracks to be more intuitive and to not contain the word "predict" in it)
         try:
             track = Track.objects.get(track_id=track_id)
         except Track.DoesNotExist:
@@ -109,6 +108,7 @@ class FetchRecommendedTracksView(viewsets.ViewSet):
             try:
                 # Get the audio features of each track
                 audio_feature = AudioFeature.objects.get(track=track)
+
                 # Calculate the Cosinus distance between all the features
                 distance = cosine_distance(current_audio_feature.mfcc_mean, audio_feature.mfcc_mean)
                 distance += cosine_distance(current_audio_feature.tempo, audio_feature.tempo)
@@ -136,8 +136,3 @@ class FetchRecommendedTracksView(viewsets.ViewSet):
             result.append(track_results)
         
         return result
-
-
-        
-
-

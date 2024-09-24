@@ -8,3 +8,4 @@ numpy
 librosa
 ffmpeg-python
 pydub
+django-extensions
