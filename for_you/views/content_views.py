@@ -6,10 +6,8 @@ from django.shortcuts import render
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from core.utils import cosine_distance
-from rest_framework.request import Request
-from rest_framework.response import Response
-from core.models import AudioFeature, Track, UserActivity
-from core.utils import load_model  # Import the load_model function
+from rest_framework import status, viewsets
+from core.serializers import UserPreferenceSerializer, ListeningHistorySerializer, TrackSerializer
 
 class FetchTrackView(viewsets.ViewSet):
 
@@ -33,32 +31,6 @@ class FetchTrackView(viewsets.ViewSet):
 
         # Send a success response (200 OK) with the data
         return Response(results, status=status.HTTP_200_OK)
-
-    def retrieve(self, request, pk=None):
-        try:
-            track = Track.objects.get(track_id=track_id)
-        except Track.DoesNotExist:
-            return {"error": "Track not found", "status": status.HTTP_404_NOT_FOUND}
-
-        try:
-            audio_feature = AudioFeature.objects.get(track=track)
-        except AudioFeature.DoesNotExist:
-            return {"error": "Audio features not found", "status": status.HTTP_404_NOT_FOUND}
-
-        # Return a dictionary of data that will be used in the Response object
-        return {
-            "track_id": track.track_id,
-            "title": track.track_title,
-            "audio_url": track.audio_url,
-            "album_image": track.album_image,
-            "album_name": track.album_name,
-            "audio_features": {
-                "chroma_mean": audio_feature.chroma_mean,
-                "tempo": audio_feature.tempo,
-                "mfcc_mean": audio_feature.mfcc_mean
-            }
-        }
- 
 
 class FetchRecommendedTracksView(viewsets.ViewSet):
 
@@ -134,5 +106,4 @@ class FetchRecommendedTracksView(viewsets.ViewSet):
                     "distance": distance
                 }
             result.append(track_results)
-        
         return result
