@@ -64,6 +64,8 @@ MIDDLEWARE = [
     'core.middleware.AssignDummyUserMiddleware',
 ]
 
+
+
 CORS_ALLOW_ALL_ORIGINS = True  # Be cautious with this in production
 
 ROOT_URLCONF = 'vibra_backend.urls'

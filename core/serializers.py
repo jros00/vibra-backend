@@ -1,135 +1,132 @@
 from django.utils.dateparse import parse_datetime
 from rest_framework import serializers
-from core.models import UserPreference, Track, ListeningHistory, AudioFeature
+from core.models import UserPreference, Track, ListeningHistory, AudioFeature, RequestLog
 from django.utils import timezone
 from datetime import timedelta
-from .models import Track
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 
 
 class AudioFeatureSerializer(serializers.ModelSerializer):
     class Meta:
         model = AudioFeature
         fields = ['chroma_mean', 'tempo', 'mfcc_mean']
-        
-        
+
+
 class TrackSerializer(serializers.ModelSerializer):
     '''Returns the full data of the Track, including its audio features'''
-    audio_feature = AudioFeatureSerializer(read_only=True)
+    audio_features = AudioFeatureSerializer(read_only=True)
+
     class Meta:
         model = Track
-        fields = ['track_id', 'track_title', 'audio_url', 'album_image','album_name', 'audio_feature']
+        fields = ['track_id', 'track_title', 'artist_name', 'audio_url', 'audio_features']
+        read_only_fields = ['track_id']
+
     
-    def validate(self, track_id):
+    def to_representation(self, instance):
+        '''
+        Override the to_representation method to include audio features
+        when returning the data.
+        '''
+        representation = super().to_representation(instance)
+
+        # Correctly access the reverse relationship for audio features
         try:
-            track_id = Track.objects.get(track_id=track_id)
-            try:
-                AudioFeature.get(track_id=track_id)
-            except AudioFeature.DoesNotExist:
-                raise serializers.ValidationError("Audio features for this track could not be found.")
-        except Track.DoesNotExist:
-            raise serializers.ValidationError({"track": "Track with this ID does not exist."})
-        return track_id
+            # Assuming AudioFeature has a ForeignKey or OneToOneField to Track
+            audio_features = instance.audiofeature  # Access the reverse relationship
+            representation['audio_features'] = AudioFeatureSerializer(audio_features).data
+        except AudioFeature.DoesNotExist:
+            representation['audio_features'] = None  # Handle the case when no audio features exist
+
+        return representation
+
+
 
 class UserPreferenceSerializer(serializers.ModelSerializer):
-    '''Is activated for likes and dislikes'''
+    '''Handles likes and dislikes'''
     track = TrackSerializer(read_only=True)
-    
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
     class Meta:
         model = UserPreference
-        fields = ['user', 'activity_type', 'time_stamp', 'track_id']  # The fields you want to save
+        fields = ['user', 'activity_type', 'time_stamp', 'track']  # The fields you want to save
 
     def validate(self, data):
-        # Check if track instance is found using the track serializer
-        user_id = self.context['request'].user
-        try: 
-            User.objects.get(username=user_id)
-            data['user'] = user_id
-        except User.DoesNotExist:
-            raise serializers.ValidationError("User does not exist.")
-        try: 
-            data.get('track')
-        except:
-            raise serializers.ValidationError("No track exists with this ID.")
-        
+        # Ensure the track exists
+        track = get_object_or_404(Track, track_id=data.get('track_id'))
+        data['track'] = track  # Use ForeignKey relationship directly
+
         activity_type = data.get('activity_type')
-        
         if activity_type not in ("like", "dislike"):
-            raise serializers.ValidationError("Activity not allowed.")
-        data['activity_type'] = activity_type
+            raise serializers.ValidationError("Activity type not allowed.")
+
         data['time_stamp'] = timezone.now()
         return data
-        
+
+
+class RequestLogSerializer(serializers.ModelSerializer):
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    timestamp = serializers.HiddenField(default=timezone.now)
+
+    class Meta:
+        model = RequestLog
+        fields = ['user', 'track', 'timestamp']
 
     def create(self, validated_data):
-        '''Create a new user activity and associate it with the current user'''
-        user_preference = UserPreference.objects.create(**validated_data)
-        return user_preference
+        # Always create the RequestLog object
+        return RequestLog.objects.create(**validated_data)
+
 
 class ListeningHistorySerializer(serializers.ModelSerializer):
-    '''Is activated once the user moves on to the next track'''
+    '''
+    Handles listening history and time validation based on RequestLog.
+    '''
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    timestamp = serializers.HiddenField(default=timezone.now)
     track = TrackSerializer(read_only=True)
+
     class Meta:
         model = ListeningHistory
-        fields = ['track_id', 'start_listening_time']  # The fields you want to save
+        fields = ['user', 'timestamp', 'track', 'listening_time']
 
     def validate(self, data):
-        previous_track_id = data.get('previous_track_id').track_id
-        
-        # Check if track_id2 is a Track object and get its track_id. It ends up in a loop with the keys and extract the whole track object
-        if isinstance(previous_track_id, Track):
-            previous_track_id = previous_track_id.track_id  # Extract the actual ID from the Track object
-        try:
-            Track.get(track_id = previous_track_id)
-        except:
-            raise serializers.ValidationError('Previous track does not exist.') 
-
-        track = data.get('track')
-        if track is None or previous_track_id is None:
-            raise serializers.ValidationError("Missing track ID.")
-        
-        start_listening_time = data.pop('start_listening_time', None)
-        start_listening_time = parse_datetime(start_listening_time)
-        
-        if not start_listening_time:
-            raise serializers.ValidationError("Invalid start listening time format.")
-        
-        current_time = timezone.now()
-        if start_listening_time > current_time or start_listening_time < current_time - timedelta(minutes=30):
-            raise serializers.ValidationError("Session expired")
-        
-        # Add start_listening_time to validated data for use in create method
-        data['start_listening_time'] = start_listening_time
-        
-        # Access the user from the context
-        user_id = self.context['request'].user
-        
-        user = User.get(user = user_id)
-        if user is None:
-            raise serializers.ValidationError("Invalid user")
-        data['user'] = user.username # Add user to the fields to be processed
-        data['time_stamp'] = current_time
-        
-        
-        if not start_listening_time:
-            raise serializers.ValidationError("Listening time for track could not be processed")
-        
+        print('inside val')
+        # Ensure track exists and perform validation
+        print(data)
+        track = self.context.get('track_results')
+        track_id = track['track_id']
+        if track is None:
+            raise serializers.ValidationError("Track does not exist.")
+        data['track'] = track_id
         return data
 
     def create(self, validated_data):
-        
-        # Tags the activity with the current time
-        time = validated_data.get('time_stamp')
-        
-        # Only calculate listening time, do not save start_listening_time
-        
+        # Get the user and track from the validated data
+        print('inside_create')
+        user = validated_data['user']
+        track = validated_data['track']
 
-        user_activity = ListeningHistory.objects.create(
-            user=user, 
-            timestamp=time, 
-            listening_time=listening_time,  # Save calculated listening time
-            **validated_data  # Other validated data
-            )
+        # Create the RequestLog first (this happens always)
+        request_log_data = {
+            'user': user,
+            'track': track,
+            'timestamp': timezone.now()
+        }
 
-        return user_activity
+        request_log_serializer = RequestLogSerializer(data=request_log_data)
+        if request_log_serializer.is_valid():
+            request_log = request_log_serializer.save()  # Always save the request log
+        else:
+            raise serializers.ValidationError(request_log_serializer.errors)
 
+        # Now check if past RequestLog objects exist for the user
+        past_request_logs = RequestLog.objects.filter(user=user).exclude(id=request_log.id)
+
+        if past_request_logs.exists():
+            # If past request logs exist, create ListeningHistory
+            return ListeningHistory.objects.create(**validated_data)
+        else:
+            # If no past request logs exist, you can either:
+            # - Return None (if you don't want to create ListeningHistory)
+            # - Return some meaningful data or message indicating ListeningHistory wasn't created.
+            raise serializers.ValidationError("Listening history not created. No previous request log found.")

@@ -1,109 +1,134 @@
 # content views related to users
-import numpy as np
-from django.contrib.auth.signals import user_logged_in, user_logged_out
-from django.dispatch import receiver
-from django.shortcuts import render
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
+from rest_framework.request import Request
+from rest_framework.response import Response
+from core.models import Track
+from core.serializers import TrackSerializer, UserPreferenceSerializer, ListeningHistorySerializer
 from core.utils import cosine_distance
 from rest_framework import status, viewsets
-from core.serializers import UserPreferenceSerializer, ListeningHistorySerializer, TrackSerializer
+import numpy as np
+import logging
+#from concurrent.futures import ThreadPoolExecutor, as_completed
+import random
+from django.forms.models import model_to_dict
+
+
+logger = logging.getLogger(__name__)
 
 class FetchTrackView(viewsets.ViewSet):
-
-    # NOTE: create method: This is the correct method for POST in Django REST Framework.
-    #  When a POST request is made to this view, the create method will be called.
-
-    def create(self, request: Request):
-        # Read 'track_id' from the POST request body
-        track_id = request.data.get("track_id")
-
-        # If 'track_id' is not provided, return a 400 error response
-        if not track_id:
-            return Response({"error": "Missing track_id"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Call a helper method to process and return track data
-        results = self.process_track(track_id)
-
-        # Check if there's an error and handle it
-        if 'error' in results:
-            return Response(results, status=results.get('status', status.HTTP_400_BAD_REQUEST))
-
-        # Send a success response (200 OK) with the data
-        return Response(results, status=status.HTTP_200_OK)
-
-class FetchRecommendedTracksView(viewsets.ViewSet):
-
-    # NOTE: To be made much more complex later, for now just based on previously listened song
-
-    def create(self, request: Request):
-        # Read 'track_id' from the POST request body
-        track_id = request.data.get("track_id")
-
-        # If 'track_id' is not provided, return a 400 error response
-        if not track_id:
-            return Response({"error": "Missing track_id"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Call a helper method to process and return track data
-        track_processor = FetchTrackView()
-        curr_track_results = track_processor.process_track(track_id)
-        if 'error' in curr_track_results:
-            return Response(curr_track_results, status=curr_track_results.get('status', status.HTTP_400_BAD_REQUEST))
-        
-        results = self.fetch_similar_tracks(curr_track_results)
-        return Response(results, status=status.HTTP_200_OK)
+    '''Fetch a specific track by its track_id.'''
     
-
-    def list(self, request: Request):
+    def get_track_or_404(self, track_id):
         try:
-            track = Track.objects.get(id=1)
+            return Track.objects.get(track_id=track_id)
         except Track.DoesNotExist:
-            return {"error": "Track not found", "status": status.HTTP_404_NOT_FOUND}
-        
-        # Call a helper method to process and return track data
-        track_processor = FetchTrackView()
-        track_results = track_processor.process_track(track.track_id)
-        if 'error' in track_results:
-            return Response(track_results, status=track_results.get('status', status.HTTP_400_BAD_REQUEST))
+            return None
 
-        results = self.fetch_similar_tracks(track_results)
-        return Response(results, status=status.HTTP_200_OK)
+    def create(self, request: Request):
+        track_id = request.data.get('track_id')
+        track = self.get_track_or_404(track_id)
+        if not track:
+            return Response({"error": "Track not found"}, status=status.HTTP_404_NOT_FOUND)
+        track_dict = model_to_dict(track)
+        serializer = TrackSerializer(data=track_dict, instance=track)
+        if serializer.is_valid():
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class FetchRecommendedTracksView(FetchTrackView): 
+    '''Still some bugs with registation of listening history'''
+    def create(self, request: Request):
+        track_id = request.data.get('track_id')
+        curr_track = self.get_track_or_404(track_id)
+        response = self.main_function(curr_track, request)
+        return response
+        
+    def list(self, request: Request):
+        '''Fetch recommended tracks based on the current track's audio features.'''
+        tracks = list(Track.objects.all())
+        random_track = random.choice(tracks)
+        print(random_track)
+        response = self.main_function(random_track, request)
+        return response
+
+    def main_function(self, track, request: Request):
+        # Serialize the current track's data
+        data = request.data
+        track_results = TrackSerializer(track).data
+        print(track_results)
+        # Fetch the similar tracks based on current track's features
+        similar_tracks = self.fetch_similar_tracks(track_results)
+        # Perform the create requests for ListeningHistory (if needed)
+        # Pass the track instance to the serializer
+        serializer = ListeningHistorySerializer(data=data, context={'request': request, 'track_results': track_results}, partial = True)
+        
+        if serializer.is_valid():
+            try:
+                serializer.save()  # This will trigger the logic in `ListeningHistorySerializer`
+                print('history created')
+                print('log created')
+                return Response(similar_tracks, status=status.HTTP_200_OK)
+            except:
+                # If only logging
+                print('log created')
+                return Response(similar_tracks, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        
     
-
     def fetch_similar_tracks(self, curr_track_results):
+        '''Fetch similar tracks based on cosine similarity of audio features.'''
         
-        # Fetch all other tracks to compare against the current track
-        all_tracks = Track.objects.exclude(track_id=curr_track_results["track_id"])
+        # Fetch all other tracks excluding the current one, along with their audio features
+        all_tracks = Track.objects.exclude(track_id=curr_track_results["track_id"]).select_related('audiofeature')
+
         similar_tracks = []
 
-        for track in all_tracks:
-            try:
-                # Get the audio features of each track
-                audio_feature = AudioFeature.objects.get(track=track)
+        # Ensure the current track has valid audio features
+        curr_mfcc = curr_track_results['audio_features'].get('mfcc_mean', None)
+        curr_tempo = curr_track_results['audio_features'].get('tempo', None)
+        curr_chroma = curr_track_results['audio_features'].get('chroma_mean', None)
+        if curr_mfcc is None or curr_tempo is None or curr_chroma is None:
+            return []  # No valid audio features, return empty list
 
-                # Calculate the Cosinus distance between all the features
-                distance = cosine_distance(current_audio_feature.mfcc_mean, audio_feature.mfcc_mean)
-                distance += cosine_distance(current_audio_feature.tempo, audio_feature.tempo)
-                distance += cosine_distance(current_audio_feature.chroma_mean, audio_feature.chroma_mean)
-                similar_tracks.append((track, distance))
-            except AudioFeature.DoesNotExist:
-                # Skip if the track doesn't have audio features
+        for track in all_tracks:
+            audio_feature = getattr(track, 'audiofeature', None)
+
+            # Skip tracks without audio features
+            if not audio_feature:
                 continue
 
-        # Sort by similarity (lower distance = more similar)
-        similar_tracks = sorted(similar_tracks, key=lambda x: x[1])[:5]  # Top 5 similar tracks
+            # Calculate cosine distance between features
+            try:
+                distance = sum([
+                    cosine_distance(np.array(curr_mfcc), np.array(audio_feature.mfcc_mean)),
+                    cosine_distance(curr_tempo, audio_feature.tempo),
+                    cosine_distance(np.array(curr_chroma), np.array(audio_feature.chroma_mean))
+                ])
+            except Exception as e:
+                logger.error(f"Error calculating cosine distance for track {track.track_id}: {e}")
+                continue
 
-        result = []
-        for track_data in similar_tracks:
-            track: Track = track_data[0]
-            distance = track_data[1]
-            track_results =  {
-                    "track_id": track.track_id,
-                    "track_title": track.track_title,
-                    "artist_name": track.artist_name,
-                    "audio_url": track.audio_url,  # Jamendo URL for similar tracks
-                    "album_image": track.album_image,  # Return album image (track image) for similar tracks
-                    "distance": distance
-                }
-            result.append(track_results)
-        return result
+            # Attach the distance to the track object
+            track.distance = distance
+
+            similar_tracks.append(track)
+
+        # Sort by similarity (lower distance = more similar)
+        similar_tracks = sorted(similar_tracks, key=lambda x: x.distance)[:5]  # Top 5 similar tracks
+
+        # Serialize the similar tracks using the TrackSerializer
+        serialized_tracks = TrackSerializer(similar_tracks, many=True).data
+
+        return serialized_tracks
+
+
+class Preferences(viewsets.ViewSet):
+    '''Handles likes and dislikes'''
+    def create(self, request: Request):
+        if 'activity_type' in request.data:  # Liking or disliking
+            preference_serializer = UserPreferenceSerializer(data=request.data)
+            if preference_serializer.is_valid():
+                preference_serializer.save()
+                return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)  

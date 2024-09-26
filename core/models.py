@@ -2,14 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-<<<<<<< HEAD
-
-class Track(models.Model):
-    track_id = models.IntegerField(unique=True)  # Unique track ID from Jamendo
-=======
 class Track(models.Model):
     track_id = models.IntegerField(unique=True, primary_key=True)  # Unique track ID from Jamendo
->>>>>>> 221ee38 (Temporary commit before merging recovery-branch)
     track_title = models.CharField(max_length=255)
     artist_name = models.CharField(max_length=255)
     album_id = models.IntegerField(unique=False)  # Unique track ID from Jamendo
@@ -53,3 +47,8 @@ class Artist(models.Model):
 
     def __str__(self):
         return self.name
+
+class RequestLog(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    track_id = models.ForeignKey(Track, on_delete=models.CASCADE)
+    last_request_time = models.DateTimeField(default=timezone.now)
