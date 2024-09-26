@@ -45,3 +45,8 @@ class Artist(models.Model):
 
     def __str__(self):
         return self.name
+
+class RequestLog(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    track_id = models.ForeignKey(Track, on_delete=models.CASCADE)
+    last_request_time = models.DateTimeField(default=timezone.now)
