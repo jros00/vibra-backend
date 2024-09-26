@@ -71,14 +71,20 @@ class FetchRecommendedTracksView(viewsets.ViewSet):
         # Read 'track_id' from the POST request body
         track_id = request.data.get("track_id")
 
+        print('Here')
+        print(request.data)
+        print(request)
+
         # If 'track_id' is not provided, return a 400 error response
         if not track_id:
+            print("Missing track_id.")
             return Response({"error": "Missing track_id"}, status=status.HTTP_400_BAD_REQUEST)
         
         # Call a helper method to process and return track data
         track_processor = FetchTrackView()
         curr_track_results = track_processor.process_track(track_id)
         if 'error' in curr_track_results:
+            print("No track results.")
             return Response(curr_track_results, status=curr_track_results.get('status', status.HTTP_400_BAD_REQUEST))
         
         results = self.fetch_similar_tracks(curr_track_results)
@@ -131,7 +137,6 @@ class FetchRecommendedTracksView(viewsets.ViewSet):
                     "artist_name": track.artist_name,
                     "audio_url": track.audio_url,  # Jamendo URL for similar tracks
                     "album_image": track.album_image,  # Return album image (track image) for similar tracks
-                    "distance": distance
                 }
             result.append(track_results)
         

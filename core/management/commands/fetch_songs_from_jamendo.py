@@ -7,8 +7,8 @@ from pydub import AudioSegment
 import io
 
 API_KEY = '0989ca22'  # Key that I have created on the Jamendo website for our Vibra project
-LIMIT_PER_REQUEST = 10  # 200 are the maximum tracks per request allowed by the Jamendo API
-TOTAL_TRACKS_NEEDED = 10  # Set the total number of tracks to fetch
+LIMIT_PER_REQUEST = 200  # 200 are the maximum tracks per request allowed by the Jamendo API
+TOTAL_TRACKS_NEEDED = 200  # Set the total number of tracks to fetch
 
 class Command(BaseCommand):
     help = 'Fetch songs from the Jamendo API, store them in the database, and process audio features directly from the URL.'
