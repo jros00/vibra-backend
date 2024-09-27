@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                 ('audio_url', models.URLField(max_length=500)),
                 ('duration', models.PositiveIntegerField()),
                 ('release_date', models.DateField(blank=True, null=True)),
-                ('genre', models.CharField(blank=True, max_length=255, null=True)),
+                ('genre', models.JSONField(blank=True, null=True)),
                 ('share_url', models.URLField(blank=True, max_length=500, null=True)),
                 ('license_url', models.URLField(blank=True, max_length=500, null=True)),
             ],

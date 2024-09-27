@@ -12,7 +12,7 @@ class Track(models.Model):
     audio_url = models.URLField(max_length=500)  # URL to stream/download the audio file
     duration = models.PositiveIntegerField()  # Duration in seconds
     release_date = models.DateField(null=True, blank=True)
-    genre = models.CharField(max_length=255, null=True, blank=True)
+    genre = models.JSONField(null=True, blank=True)
     share_url = models.URLField(max_length=500, null=True, blank=True)  # URL to share the track
     license_url = models.URLField(max_length=500, null=True, blank=True)  # License for commercial use
 

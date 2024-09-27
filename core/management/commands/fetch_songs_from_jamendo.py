@@ -7,23 +7,26 @@ from pydub import AudioSegment
 import io
 
 API_KEY = '0989ca22'  # Key that I have created on the Jamendo website for our Vibra project
-LIMIT_PER_REQUEST = 200  # 200 are the maximum tracks per request allowed by the Jamendo API
-TOTAL_TRACKS_NEEDED = 200  # Set the total number of tracks to fetch
+LIMIT_PER_REQUEST = 50  # Fetch 50 tracks per genre
+GENRES = ['house', 'electronic', 'hiphop', 'chillout']  # Genres to fetch
+ORDER = 'popularity_total'  # Order by popularity
+
 
 class Command(BaseCommand):
-    help = 'Fetch songs from the Jamendo API, store them in the database, and process audio features directly from the URL.'
+    help = 'Fetch songs from the Jamendo API for specific genres and store them in the database.'
 
     def handle(self, *args, **kwargs):
         url = 'https://api.jamendo.com/v3.0/tracks'
-        tracks_fetched = 0
 
-        for offset in range(0, TOTAL_TRACKS_NEEDED, LIMIT_PER_REQUEST):
+        for genre in GENRES:
+            self.stdout.write(self.style.SUCCESS(f"Fetching {LIMIT_PER_REQUEST} tracks for genre: {genre}"))
             params = {
                 'client_id': API_KEY,
                 'format': 'json',
                 'limit': LIMIT_PER_REQUEST,
-                'offset': offset,
-                'include': 'musicinfo+licenses'  # Include additional fields
+                'tags': genre,
+                'include': 'musicinfo+licenses',  # Include additional fields
+                'order': ORDER,
             }
 
             response = requests.get(url, params=params)
@@ -31,7 +34,6 @@ class Command(BaseCommand):
             if response.status_code == 200:
                 data = response.json()
                 tracks = data.get('results', [])
-                tracks_fetched += len(tracks)
 
                 for track in tracks:
                     track_id = track['id']
@@ -41,7 +43,6 @@ class Command(BaseCommand):
                     album_id = track.get('album_id', None)
                     album_image = track.get('image', None)
                     artist_id = track.get('artist_id', None)
-                    genre = track.get('musicinfo', {}).get('tags', [])
                     duration = track['duration']
                     release_date = track.get('releasedate', None)
                     audio_url = track.get('audio', '') or track.get('audiodownload', '')
@@ -51,7 +52,10 @@ class Command(BaseCommand):
                     licenses = track.get('licenses', [])
                     license_url = None
                     if isinstance(licenses, list) and len(licenses) > 0:
-                        license_url = licenses[0].get('buyurl', None)
+                        license_url = licenses[0].get('url', None)
+
+                    # Get the genres from 'musicinfo' -> 'tags' -> 'genres'
+                    genres = track.get('musicinfo', {}).get('tags', {}).get('genres', [])
 
                     if not audio_url:
                         self.stdout.write(self.style.ERROR(f"Track {track_title} does not have a valid audio URL."))
@@ -70,7 +74,7 @@ class Command(BaseCommand):
                             'audio_url': audio_url,
                             'duration': duration,
                             'release_date': release_date,
-                            'genre': genre,
+                            'genre': genres,  # Store the list of genres
                             'share_url': share_url,
                             'license_url': license_url,
                         }
@@ -98,13 +102,8 @@ class Command(BaseCommand):
                             self.stdout.write(self.style.ERROR(f"Error saving AudioFeature for {track_obj.track_id}: {e}"))
                     else:
                         self.stdout.write(self.style.WARNING(f"Failed to extract features for {track_title}."))
-                
-                # Stop if we've fetched enough tracks
-                if tracks_fetched >= TOTAL_TRACKS_NEEDED:
-                    break
             else:
                 self.stdout.write(self.style.ERROR(f"Failed to fetch data: {response.status_code}"))
-                break
 
     def process_audio_from_url(self, audio_url):
         """
