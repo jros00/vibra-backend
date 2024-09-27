@@ -90,7 +90,7 @@ class Command(BaseCommand):
                         try:
                             # Save the extracted audio features (MFCC, tempo, chroma_mean)
                             AudioFeature.objects.update_or_create(
-                                track=track_obj,
+                                track = track_obj,
                                 defaults={
                                     'mfcc_mean': mfcc_mean,
                                     'tempo': tempo,

@@ -29,7 +29,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -40,13 +39,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
     # Third party apps
     'rest_framework',
     'corsheaders',
     # Our apps
     'home',
     'core',
-    'for_you'
+    'for_you',
+    'action'
 ]
 
 MIDDLEWARE = [
@@ -60,6 +61,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Our own middleware
+    'core.middleware.AssignDummyUserMiddleware',
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True  # Be cautious with this in production
