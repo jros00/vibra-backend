@@ -43,7 +43,6 @@ class FetchTrackView(viewsets.ViewSet):
 class FetchRecommendedTracksView(viewsets.ViewSet):
 
     # NOTE: To be made much more complex later, for now just based on previously listened song
-
     def create(self, request: Request):
         # Read 'track_id' from the POST request body
         track_id = request.data.get('track_id')

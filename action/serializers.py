@@ -111,8 +111,6 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
         return user_preference
 
 
-
-
 class ListeningHistorySerializer(serializers.ModelSerializer):
     """
     Serializer for individual listening history records.

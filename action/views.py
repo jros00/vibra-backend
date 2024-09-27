@@ -13,6 +13,7 @@ class RateView(viewsets.ViewSet):
             return Response(status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
 
+
 class ListeningHistoryView(viewsets.ViewSet):
     """
     ViewSet to handle the bulk creation of listening history records.
