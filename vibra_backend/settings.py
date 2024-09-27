@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     # Our apps
     'home',
     'core',
-    'for_you'
+    'for_you',
+    'action'
 ]
 
 MIDDLEWARE = [
@@ -63,8 +64,6 @@ MIDDLEWARE = [
     # Our own middleware
     'core.middleware.AssignDummyUserMiddleware',
 ]
-
-
 
 CORS_ALLOW_ALL_ORIGINS = True  # Be cautious with this in production
 

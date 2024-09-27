@@ -5,7 +5,7 @@ import joblib
 import os
 from django.conf import settings
 
-# Path to the saved model file
+# Path to the saved machine learning model file
 MODEL_PATH = os.path.join(settings.BASE_DIR, 'models', 'my_model.pkl')
 
 def extract_audio_features_from_raw(y, sr):
