@@ -89,6 +89,3 @@ class FetchRecommendedTracksView(FetchTrackView):
         serialized_tracks = TrackSerializer(similar_tracks, many=True).data
 
         return serialized_tracks
-
-
- 
