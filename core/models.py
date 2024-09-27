@@ -1,8 +1,5 @@
 from django.db import models
-<<<<<<< HEAD
-=======
 
->>>>>>> fc4c98d (Started a new action app, working user rating and global rating)
 
 class Track(models.Model):
     track_id = models.IntegerField(unique=True, primary_key=True)  # Unique track ID from Jamendo

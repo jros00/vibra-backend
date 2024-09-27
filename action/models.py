@@ -17,10 +17,10 @@ class GlobalPreference(models.Model):
     track = models.OneToOneField(Track, on_delete=models.CASCADE)
     likes = models.IntegerField(default=0)
     dislikes = models.IntegerField(default=0)
+    
 
 class ListeningHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    
     timestamp = models.DateTimeField(default=timezone.now)
     track = models.ForeignKey(Track, on_delete=models.CASCADE)
     listening_time = models.DurationField(null=True, blank=True)
