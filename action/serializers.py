@@ -2,6 +2,8 @@ from rest_framework import serializers
 from action.models import UserPreference, ListeningHistory, GlobalPreference
 from core.models import Track
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class GlobalPreferenceSerializer(serializers.ModelSerializer):
@@ -108,67 +110,120 @@ class UserPreferenceSerializer(serializers.ModelSerializer):
 
         return user_preference
 
+
+
+
+class ListeningHistorySerializer(serializers.ModelSerializer):
+    """
+    Serializer for individual listening history records.
+    """
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    start_listening_time = serializers.CharField(write_only=True)
+    end_listening_time = serializers.CharField(write_only=True)
+    track_id = serializers.IntegerField(write_only=True)
     
+    # Listening time formatted as hour:min:sec
+    formatted_listening_time = serializers.SerializerMethodField()
 
-# class ListeningHistorySerializer(serializers.ModelSerializer):
-#     '''
-#     Handles listening history and time validation based on RequestLog.
-#     '''
-#     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
-#     timestamp = serializers.HiddenField(default=timezone.now)
-#     #track = TrackSerializer(read_only=True)
+    class Meta:
+        model = ListeningHistory
+        fields = ['user', 'timestamp', 'track_id', 'listening_time', 'formatted_listening_time', 'start_listening_time', 'end_listening_time']
 
-#     class Meta:
-#         model = ListeningHistory
-#         fields = ['user', 'timestamp', 'track', 'listening_time']
+    def validate(self, data):
+        """
+        Validate start and end listening times and ensure the track exists.
+        """
+        start_time = data.get('start_listening_time')
+        end_time = data.get('end_listening_time')
 
-    # def validate(self, data):
-    #     print('inside val')
+        # Parse datetime strings
+        start_time = parse_datetime(start_time)
+        end_time = parse_datetime(end_time)
 
-    #     # Access the track from context and ensure it exists
-    #     track = self.context.get('track_results')
-    #     if track is None:
-    #         raise serializers.ValidationError("Track does not exist.")
+        if not start_time or not end_time:
+            raise serializers.ValidationError("Start and end listening times must be provided.")
+        if start_time >= end_time:
+            raise serializers.ValidationError("End listening time must be after start listening time.")
 
-    #     # Extract track_id after validation
-    #     track_id = track['track_id']
-    #     data['track'] = track_id
+        # Validate track exists
+        track_id = data.get('track_id')
+        if not Track.objects.filter(pk=track_id).exists():
+            raise serializers.ValidationError("Track does not exist.")
 
-    #     # Now check if past RequestLog objects exist for the user
-    #     user = data.get('user')
-    #     #past_request_logs = RequestLog.objects.filter(user=user)
+        # Calculate listening duration (timedelta)
+        data['listening_time'] = end_time - start_time
 
-    #     if past_request_logs.exists():
-    #         # Get the most recent request log by timestamp
-    #         last_request_log = past_request_logs.order_by('-timestamp').first()
-    #         data['past_request_log'] = last_request_log
-    #         print(last_request_log)
+        return data
 
-    #     # Create or validate the request log using the serializer, not the model directly
-    #     request_log_serializer = RequestLogSerializer(data={'user': user, 'track': track_id})
-        
-    #     if request_log_serializer.is_valid():
-    #         request_log = request_log_serializer.save()  # Save the request log
-    #         print('log created!')
-    #     else:
-    #         raise serializers.ValidationError(request_log_serializer.errors)
+    def create(self, validated_data):
+        """
+        Create or update a ListeningHistory instance after replacing track_id with the actual Track object.
+        """
+        validated_data.pop('start_listening_time', None)
+        end_time = validated_data.pop('end_listening_time', None)
 
-    #     return data
+        # Replace track_id with the actual track object
+        track_id = validated_data.pop('track_id')
+        track = Track.objects.get(pk=track_id)
+        validated_data['track'] = track
+
+        user = self.context['request'].user
+
+        # Use filter() to retrieve all entries for the same user and track
+        listening_histories = ListeningHistory.objects.filter(user=user, track=track).order_by('-timestamp')
+
+        if listening_histories.exists():
+            # If records exist, update the most recent one
+            listening_history = listening_histories.first()
+            listening_history.listening_time += validated_data['listening_time']
+            listening_history.timestamp = end_time  # Update timestamp to the current time
+            listening_history.save()
+        else:
+            # If no record exists, create a new one
+            listening_history = ListeningHistory.objects.create(**validated_data)
+
+        return listening_history
+
+    def get_formatted_listening_time(self, obj):
+        """
+        Return listening time in the format hh:mm:ss.
+        """
+        # Get the listening_time which is a timedelta object
+        listening_time = obj.listening_time
+
+        # Calculate hours, minutes, and seconds
+        total_seconds = int(listening_time.total_seconds())
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        # Return the formatted string
+        return f"{hours:02}:{minutes:02}:{seconds:02}"
 
 
-    # def create(self, validated_data):
-    #     # Get the user and track from the validated data
-    #     print('inside_create')
-    #     user = validated_data['user']
-    #     track = validated_data['track']
-    #     request_log = validated_data.pop('request_log')
+class MultipleListeningHistorySerializer(serializers.Serializer):
+    """
+    Serializer for bulk creation or update of multiple listening history records.
+    """
+    listening_histories = ListeningHistorySerializer(many=True)
 
-        
-    #     if past_request_logs.exists():
-    #         # If past request logs exist, create ListeningHistory
-    #         return ListeningHistory.objects.create(**validated_data)
-    #     else:
-    #         # If no past request logs exist, you can either:
-    #         # - Return None (if you don't want to create ListeningHistory)
-    #         # - Return some meaningful data or message indicating ListeningHistory wasn't created.
-    #         raise serializers.ValidationError("Listening history not created. No previous request log found.")
+    def create(self, validated_data):
+        """
+        Efficiently create or update multiple listening history records.
+        """
+        listening_histories_data = validated_data.get('listening_histories')
+        created_or_updated_histories = []
+
+        # Create or update each listening history record
+        for listening_history_data in listening_histories_data:
+            listening_history = ListeningHistorySerializer(data=listening_history_data, context=self.context)
+
+            if listening_history.is_valid():
+                created_or_updated_histories.append(listening_history.save())
+
+        return created_or_updated_histories
+
+    def to_representation(self, instance):
+        """
+        Custom representation to return the data for each created or updated ListeningHistory.
+        """
+        return [ListeningHistorySerializer(hist, context=self.context).data for hist in instance]
