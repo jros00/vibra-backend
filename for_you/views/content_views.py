@@ -55,6 +55,8 @@ class FetchTrackView(viewsets.ViewSet):
             "audio_url": track.audio_url,
             "album_image": track.album_image,
             "album_name": track.album_name,
+            "album_image_palette": track.album_image_palette,
+            "album_image_dominant_color": track.album_image_dominant_color,
             "audio_features": {
                 "chroma_mean": audio_feature.chroma_mean,
                 "tempo": audio_feature.tempo,
@@ -70,10 +72,6 @@ class FetchRecommendedTracksView(viewsets.ViewSet):
     def create(self, request: Request):
         # Read 'track_id' from the POST request body
         track_id = request.data.get("track_id")
-
-        print('Here')
-        print(request.data)
-        print(request)
 
         # If 'track_id' is not provided, return a 400 error response
         if not track_id:
@@ -131,13 +129,8 @@ class FetchRecommendedTracksView(viewsets.ViewSet):
         for track_data in similar_tracks:
             track: Track = track_data[0]
             distance = track_data[1]
-            track_results =  {
-                    "track_id": track.track_id,
-                    "track_title": track.track_title,
-                    "artist_name": track.artist_name,
-                    "audio_url": track.audio_url,  # Jamendo URL for similar tracks
-                    "album_image": track.album_image,  # Return album image (track image) for similar tracks
-                }
+            track_processor = FetchTrackView()
+            track_results =  track_processor.process_track(track_id=track.track_id)
             result.append(track_results)
         
         return result

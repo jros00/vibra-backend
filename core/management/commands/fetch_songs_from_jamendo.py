@@ -2,6 +2,7 @@ import requests
 from django.core.management.base import BaseCommand
 from core.models import Track, AudioFeature
 from core.utils import extract_audio_features_from_raw
+from colorthief import ColorThief
 import librosa
 from pydub import AudioSegment
 import io
@@ -10,6 +11,37 @@ API_KEY = '0989ca22'  # Key that I have created on the Jamendo website for our V
 LIMIT_PER_REQUEST = 50  # Fetch 50 tracks per genre
 GENRES = ['house', 'electronic', 'hiphop', 'chillout']  # Genres to fetch
 ORDER = 'popularity_total'  # Order by popularity
+
+def extract_color_palette(image_uri):
+    try:
+        # Download the image from the URL
+        response = requests.get(image_uri)
+        response.raise_for_status()  # Check if the request was successful
+
+        # Load the image data into a BytesIO object
+        image_data = io.BytesIO(response.content)
+
+        # Use ColorThief with the BytesIO object
+        color_thief = ColorThief(image_data)
+
+        # Get the dominant color
+        dominant_color = color_thief.get_color(quality=1)
+
+        # Get a color palette (e.g., top 3 colors)
+        palette = color_thief.get_palette(color_count=3, quality=1)
+
+        print(f"Palette: {palette}, Dominant Color: {dominant_color}")
+
+        # Return the colors if needed
+        return dominant_color, palette
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error downloading image: {e}")
+        return None, None
+    except Exception as e:
+        print(f"Error processing image with ColorThief: {e}")
+        return None, None
+
 
 
 class Command(BaseCommand):
@@ -48,6 +80,8 @@ class Command(BaseCommand):
                     audio_url = track.get('audio', '') or track.get('audiodownload', '')
                     share_url = track.get('shareurl', None)
 
+                    dominant_color, palette = extract_color_palette(album_image)
+
                     # Safely handle the licenses field
                     licenses = track.get('licenses', [])
                     license_url = None
@@ -70,6 +104,8 @@ class Command(BaseCommand):
                             'album_name': album_name,
                             'album_id': album_id,
                             'album_image': album_image,
+                            'album_image_palette': palette,
+                            'album_image_dominant_color': dominant_color,
                             'artist_id': artist_id,
                             'audio_url': audio_url,
                             'duration': duration,

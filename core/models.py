@@ -10,6 +10,8 @@ class Track(models.Model):
     album_id = models.IntegerField(unique=False)  # Unique track ID from Jamendo
     album_name = models.CharField(max_length=255, null=True, blank=True)
     album_image = models.URLField(max_length=500, null=True, blank=True)  # URL for album cover image
+    album_image_palette = models.JSONField(null=True, blank=True)
+    album_image_dominant_color = models.JSONField(null=True, blank=True)
     artist_id = models.IntegerField(unique=False)  # Unique track ID from Jamendo
     audio_url = models.URLField(max_length=500)  # URL to stream/download the audio file
     duration = models.PositiveIntegerField()  # Duration in seconds
