@@ -9,3 +9,5 @@ librosa
 ffmpeg-python
 pydub
 django-extensions
+channels
+daphne

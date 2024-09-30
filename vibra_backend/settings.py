@@ -27,7 +27,9 @@ SECRET_KEY = 'django-insecure-ws0d$xx*id2u_dik3(r&dfsy59ac$*#j*_debc8egyqrl#2m6+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+#LOGIN_URL = '/login/'
+
+LOGIN_REDIRECT_URL = '/home/welcome/'
 
 # Application definition
 
@@ -43,11 +45,15 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'corsheaders',
+    'channels',
     # Our apps
     'home',
     'core',
     'for_you',
-    'action'
+    'action',
+    'notifications',
+    'user_messages',
+    'login',
 ]
 
 MIDDLEWARE = [
@@ -62,7 +68,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Our own middleware
-    'core.middleware.AssignDummyUserMiddleware',
+    'core.middleware.LoginRequiredMiddleware',
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True  # Be cautious with this in production
@@ -151,9 +157,70 @@ REST_FRAMEWORK = {
     )
 }
 
-ALLOWED_HOSTS = [my_ip, 'localhost']
+ALLOWED_HOSTS = [my_ip, 'localhost', '127.0.0.1']
+
+ASGI_APPLICATION = 'vibra_backend.asgi.application'
+
+# Channel layers configuration (using in-memory backend for simplicity; you can use Redis for production)
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
+}
 
 # Media files (for uploads such as MP3 files)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'formatters': {
+#         'verbose': {
+#             'format': '{levelname} {asctime} {module} {message}',
+#             'style': '{',
+#         },
+#         'simple': {
+#             'format': '{levelname} {message}',
+#             'style': '{',
+#         },
+#     },
+#     'handlers': {
+#         'file': {
+#             'level': 'DEBUG',
+#             'class': 'logging.FileHandler',
+#             'filename': os.path.join(BASE_DIR, 'channels_debug.log'),
+#             'formatter': 'verbose',
+#         },
+#         'console': {
+#             'level': 'DEBUG',
+#             'class': 'logging.StreamHandler',
+#             'formatter': 'simple',
+#         },
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['console', 'file'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#         'channels': {
+#             'handlers': ['console', 'file'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#         'channels.consumer': {
+#             'handlers': ['console', 'file'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#         'channels.layers': {
+#             'handlers': ['console', 'file'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#     },
+# }
+
 

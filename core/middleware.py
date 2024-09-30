@@ -1,41 +1,30 @@
-from django.utils.deprecation import MiddlewareMixin
-from django.contrib.auth.models import User
+from django.shortcuts import redirect
+from django.conf import settings
+from django.urls import reverse
 from django.middleware.csrf import get_token
 
-class AssignDummyUserMiddleware(MiddlewareMixin):
 
+class LoginRequiredMiddleware:
+    """
+    Middleware to ensure that users are authenticated for every page except login, signup, and other public pages.
+    """
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        """
-        Assign a dummy user and handle CSRF token for requests.
-        """
-
-        # Assign a dummy user for the request
-        user, created = User.objects.get_or_create(
-            username='user1',
-            defaults={
-                'email': 'user1@example.com'
-            }
-        )
-
-        # Set password (if the user was just created)
-        if created:
-            user.set_password('12345')  # You should use a more secure password
-            user.save()
-            print("User created.")
-        else:
-            print("User already exists.")
-
-        # Assign the user to the request
-        request.user = user
-
-        # Retrieve or set the CSRF token
+        # Get or create the CSRF token
         csrf_token = get_token(request)
+        
+        # Set it in the request headers
         request.META['HTTP_X_CSRFTOKEN'] = csrf_token
+        
+        # List of exempt URLs that don't require login
+        exempt_urls = [reverse('login_view')]
 
-        # Call the next middleware or view
+        if not request.user.is_authenticated and request.path not in exempt_urls:
+            print('user:', request.user)
+            return redirect(reverse('login_view'))  # Redirect to login view
+
+        # Continue processing the request
         response = self.get_response(request)
-
         return response

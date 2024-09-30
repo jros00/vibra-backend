@@ -9,6 +9,34 @@
     
     (Running on 0.0.0.0 makes the server accessible over your local network, which is necessary for testing on your iPhone.)
 
+## Installation of nginx
+
+    brew update  
+    brew install nginx
+    sudo nginx 
+    sudo mkdir -p /usr/local/etc/nginx
+    sudo nano /usr/local/etc/nginx/nginx.conf
+
+in the nginx file:
+
+    include /usr/local/etc/nginx/servers/vibra_backend.conf;
+
+press ctrl+O to save and crtl+X to exit
+
+    sudo mkdir -p /usr/local/etc/nginx
+    sudo mkdir -p /usr/local/etc/nginx/servers
+    sudo cp nginx/vibra_backend.conf /usr/local/etc/nginx/servers/vibra_backend.conf
+    sudo nginx -t
+    sudo nginx -s reload
+    sudo nginx
+
+when ending, run:
+    
+    sudo nginx -s stop
+
+to run the code:
+
+    daphne -p 8000 -b 0.0.0.0 vibra_backend.asgi:application
 
 ## LOG:
 
