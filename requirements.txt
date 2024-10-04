@@ -8,3 +8,7 @@ numpy
 librosa
 ffmpeg-python
 pydub
+django-extensions
+channels
+daphne
+uvicorn[standard]

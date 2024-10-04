@@ -2,12 +2,34 @@
 
 ## Installation Process (IMPORTANT):
     
-    1. Install dependencies: `python -m venv .venv` and `source .venv/bin/activate`and then `pip install -r requirements.txt``
-    2. Run this ONCE: `python manage.py migrate` (sets up the initial db schema in sqllite)
-    3. To START the server, run: `python manage.py runserver 0.0.0.0:8000` 
-    4. NOTE: Ideally, create a new branch by your name i.e. 'Johannes' and work and commit on this branch.
+### 1. Install dependencies: `
+        
+        python -m venv .venv
+        source .venv/bin/activate
+        pip install -r requirements.txt
+
+### 2. Run this ONCE (sets up the initial db schema in sqllite): 
+        
+        python manage.py makemigrations
+        python manage.py migrate
+
+### 3. Run this to load the database tables with initial content:
     
+        python manage.py fetch_songs_from_jamendo
+        python manage.py load_chats
+
+### 4. To START the server, run: 
+    
+        python manage.py runserver 0.0.0.0:8000
+
+    alternatively, to start server that enables websockets, run:
+
+        uvicorn vibra_backend.asgi:application --host 0.0.0.0 --port 8000
+
     (Running on 0.0.0.0 makes the server accessible over your local network, which is necessary for testing on your iPhone.)
+
+### 5. NOTE: Ideally, create a new branch by your name i.e. 'Johannes' and work and commit on this branch.
+    
 
 
 ## LOG:
