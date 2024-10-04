@@ -20,7 +20,7 @@ class LoginView(viewsets.ViewSet):
         return self.create_user(username, request)
     
     def create_user(self, username, request):
-        password = '12345'
+        password = 'password123'
         
         # Get or create the user
         user, created = User.objects.get_or_create(

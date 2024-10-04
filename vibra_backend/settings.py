@@ -92,6 +92,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'vibra_backend.wsgi.application'
+ASGI_APPLICATION = 'vibra_backend.asgi.application'
 
 
 # Database
@@ -159,7 +160,7 @@ REST_FRAMEWORK = {
 
 ALLOWED_HOSTS = [my_ip, 'localhost', '127.0.0.1']
 
-ASGI_APPLICATION = 'vibra_backend.asgi.application'
+
 
 # Channel layers configuration (using in-memory backend for simplicity; you can use Redis for production)
 CHANNEL_LAYERS = {

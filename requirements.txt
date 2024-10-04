@@ -11,3 +11,4 @@ pydub
 django-extensions
 channels
 daphne
+uvicorn[standard]
