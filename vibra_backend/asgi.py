@@ -28,7 +28,7 @@ application = ProtocolTypeRouter({
         URLRouter(
             [
                 path('ws/notifications/', NotificationConsumer.as_asgi()),
-                re_path(r'ws/chat_list/chat/(?P<group_id>\d+)/$', MessageGroupConsumer.as_asgi()),
+                re_path(r'ws/conversations/(?P<group_id>\d+)/$', MessageGroupConsumer.as_asgi()),
             ]
         )
     ),

@@ -27,32 +27,28 @@ class MessagePage(APIView):
         }, status=status.HTTP_200_OK)
 
     def post(self, request, group_id, *args, **kwargs):
+        print("inside POST")
         # Ensure the user is part of the MessageGroup
         message_group = get_object_or_404(MessageGroup, id=group_id, members=request.user)
         
         # Get content from the request
-        content = request.data.get('text')
-        
+        content = request.data.get('message')
         # Ensure content is not empty
         if not content:
             return Response({"error": "Message content cannot be empty!"}, status=status.HTTP_400_BAD_REQUEST)
         
         # Create the new message
         message = Message.objects.create(sender=request.user, recipient=message_group, content=content)
-        
+        serializer = MessageSerializer(message)
         # Broadcast the message to the WebSocket group
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             str(group_id),  # Group name must match the one in MessageGroupConsumer
             {
                 'type': 'chat_message',
-                'message': content,
-                'sender': request.user.username,
+                'message': serializer.data
             }
         )
-        
-        # Serialize the newly created message
-        serializer = MessageSerializer(message)
         
         # Return a success response with the serialized message
         return Response({
