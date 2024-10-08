@@ -7,6 +7,8 @@
         python -m venv .venv
         source .venv/bin/activate
         pip install -r requirements.txt
+        brew install redis
+        brew install ffmpeg
 
 ### 2. Run this ONCE (sets up the initial db schema in sqllite): 
         
@@ -18,15 +20,18 @@
         python manage.py fetch_songs_from_jamendo
         python manage.py load_chats
 
-### 4. To START the server, run: 
-    
-        python manage.py runserver 0.0.0.0:8000
+### 4. To START the server
 
-    alternatively, to start server that enables websockets, run:
+#### a. Open one terminal and run:
+
+        redis-server
+
+
+#### b. To START the server, run: 
 
         uvicorn vibra_backend.asgi:application --host 0.0.0.0 --port 8000
 
-    (Running on 0.0.0.0 makes the server accessible over your local network, which is necessary for testing on your iPhone.)
+(Running on 0.0.0.0 makes the server accessible over your local network, which is necessary for testing on your iPhone.)
 
 ### 5. NOTE: Ideally, create a new branch by your name i.e. 'Johannes' and work and commit on this branch.
     

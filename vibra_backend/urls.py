@@ -30,7 +30,7 @@ urlpatterns = [
     path('home/', include('home.urls')),
     path('for_you/', include('for_you.urls')),
     path('action/', include('action.urls')),
-    path('chat_list/', include('user_messages.urls')),
+    path('conversations/', include('user_messages.urls')),
     path('users/', UserListView.as_view(), name='user-list'),
     path('login/', LoginView.as_view({'post': 'create', 'get': 'retrieve'}), name='login_view'),
     path('notifications/', NotificationView.as_view(), name='notifications'),

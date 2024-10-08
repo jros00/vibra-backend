@@ -25,7 +25,7 @@ class LoginView(viewsets.ViewSet):
         # Get or create the user
         user, created = User.objects.get_or_create(
             username=username,
-            defaults={'password': User.objects.make_random_password()},
+            defaults={'password': password},
         )
 
         if created:

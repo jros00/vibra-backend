@@ -12,3 +12,4 @@ django-extensions
 channels
 daphne
 uvicorn[standard]
+channels_redis
