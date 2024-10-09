@@ -27,7 +27,6 @@ class MessagePage(APIView):
         }, status=status.HTTP_200_OK)
 
     def post(self, request, group_id, *args, **kwargs):
-        print("inside POST")
         # Ensure the user is part of the MessageGroup
         message_group = get_object_or_404(MessageGroup, id=group_id, members=request.user)
         

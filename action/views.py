@@ -1,8 +1,10 @@
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status, viewsets
-from action.serializers import UserPreferenceSerializer, MultipleListeningHistorySerializer, ListeningHistorySerializer
-
+from action.serializers import UserPreferenceSerializer, MultipleListeningHistorySerializer, ListeningHistorySerializer, ShareSerializer
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from user_messages.serializers import MessageSerializer
 
 class RateView(viewsets.ViewSet):
     '''Handles likes and dislikes'''
@@ -34,3 +36,29 @@ class ListeningHistoryView(viewsets.ViewSet):
 
         # If validation fails, return the errors
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ShareView(viewsets.ViewSet):
+    def create(self, request: Request):
+        channel_layer = get_channel_layer()
+        
+        serializer = ShareSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            created_messages = serializer.save()
+            
+            # Loop over each group_id and send the message to its channel
+            for created_message in created_messages:
+                group_id = created_message.recipient.pk  
+                async_to_sync(channel_layer.group_send)(
+                    str(group_id),  
+                    {
+                        'type': 'chat_message',
+                        'message': MessageSerializer(created_message).data # Serializes each object to the proper format for frontend
+                    }
+                )
+            return Response(status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            
+
