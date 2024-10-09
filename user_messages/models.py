@@ -15,7 +15,7 @@ class Message(models.Model):
     sender = models.ForeignKey(User, related_name='sent_messages', on_delete=models.CASCADE)
     recipient = models.ForeignKey(MessageGroup, related_name='received_messages', on_delete=models.CASCADE)
     content = models.TextField(blank=True, null=True)
-    track = models.ForeignKey(Track, blank=True, null=True, on_delete=models.CASCADE)
+    track = models.ForeignKey(Track, blank=True, null=True, on_delete=models.SET_NULL)
     timestamp = models.DateTimeField(auto_now_add=True)
     is_read = models.BooleanField(default=False)
     

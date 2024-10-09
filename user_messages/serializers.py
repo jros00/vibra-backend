@@ -1,15 +1,18 @@
 from rest_framework import serializers
 from .models import Message, MessageGroup
 from django.contrib.auth.models import User
+from core.serializers import TrackSerializer
 
 
 class MessageSerializer(serializers.ModelSerializer):
     sender = serializers.StringRelatedField()
     recipient = serializers.StringRelatedField()
+    track = TrackSerializer(read_only=True, allow_null=True)  
 
     class Meta:
         model = Message
-        fields = ['id', 'sender', 'recipient', 'content', 'timestamp']
+        fields = ['id', 'sender', 'recipient', 'content', 'timestamp', 'track']
+    
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
