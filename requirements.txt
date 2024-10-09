@@ -13,3 +13,4 @@ channels
 daphne
 uvicorn[standard]
 channels_redis
+colorthief

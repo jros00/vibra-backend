@@ -14,7 +14,6 @@ from django.shortcuts import get_object_or_404
 logger = logging.getLogger(__name__)
 
 class FetchTrackView(viewsets.ViewSet):
-    '''Fetch a specific track by its track_id.'''
     
     def create(self, request: Request):
         track_id = request.data.get('track_id')
@@ -84,6 +83,7 @@ class FetchRecommendedTracksView(FetchTrackView):
 
         # Sort by similarity (lower distance = more similar)
         similar_tracks = sorted(similar_tracks, key=lambda x: x.distance)[:5]  # Top 5 similar tracks
+
 
         # Serialize the similar tracks using the TrackSerializer
         serialized_tracks = TrackSerializer(similar_tracks, many=True).data
