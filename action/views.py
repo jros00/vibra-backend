@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status, viewsets
-from action.serializers import UserPreferenceSerializer, MultipleListeningHistorySerializer, ListeningHistorySerializer
+from action.serializers import UserPreferenceSerializer, MultipleListeningHistorySerializer, ListeningHistorySerializer, ShareSerializer
 
 
 class RateView(viewsets.ViewSet):
@@ -34,3 +34,16 @@ class ListeningHistoryView(viewsets.ViewSet):
 
         # If validation fails, return the errors
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ShareView(viewsets.ViewSet):
+    def create(self, request: Request):
+        print('request', request.data)
+        serializer = ShareSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            
+

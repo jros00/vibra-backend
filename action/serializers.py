@@ -1,9 +1,11 @@
 from rest_framework import serializers
 from action.models import UserPreference, ListeningHistory, GlobalPreference
+from user_messages.models import Message
 from core.models import Track
+from user_messages.models import MessageGroup
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from django.core.exceptions import ObjectDoesNotExist
+
 
 
 class GlobalPreferenceSerializer(serializers.ModelSerializer):
@@ -225,3 +227,62 @@ class MultipleListeningHistorySerializer(serializers.Serializer):
         Custom representation to return the data for each created or updated ListeningHistory.
         """
         return [ListeningHistorySerializer(hist, context=self.context).data for hist in instance]
+
+
+class ShareSerializer(serializers.Serializer):
+    '''
+    Serializer creating a new message with track
+    '''
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    track_id = serializers.IntegerField()
+    group_ids = serializers.ListField(child=serializers.IntegerField())
+    message = serializers.CharField()
+    class Meta:
+        model = Message
+        fields = ['user', 'track_id', 'group_ids', 'message']
+    
+    def validate(self, data):
+        print(data)
+        track_id = data.get('track_id')
+        group_ids = data.get('group_ids')
+        user = data.get('user')
+
+        if not Track.objects.filter(pk=track_id).exists():
+            raise serializers.ValidationError("Track does not exist.")
+
+        for group_id in group_ids:
+            # Check if the MessageGroup with the given pk exists
+            if not MessageGroup.objects.filter(pk=group_id).exists():
+                raise serializers.ValidationError(f"Message group with id {group_id} does not exist.")
+            
+            # Check if the user is a member of the group
+            try:
+                MessageGroup.objects.get(pk=group_id, members=user)
+            except MessageGroup.DoesNotExist:
+                raise serializers.ValidationError(f"User not a member of message group {group_id}.")
+
+        return data
+    
+    
+    def create(self, validated_data):
+        track_id = validated_data.get('track_id')
+        group_ids = validated_data.pop('group_ids')  
+        message = validated_data.pop('message')
+        user = validated_data.pop('user')
+        created_instances = []
+
+        track = Track.objects.get(pk=track_id)
+        # Loop over each group_id and create a new object for each
+        for group_id in group_ids:
+            message_group = MessageGroup.objects.get(pk=group_id)
+            instance = Message.objects.create(
+                
+                track=track,
+                recipient=message_group,
+                content=message,
+                sender=user
+            )
+            created_instances.append(instance)
+
+        # Return the first instance or whatever is appropriate for your case
+        return created_instances
