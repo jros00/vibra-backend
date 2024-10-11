@@ -13,7 +13,17 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = ['id', 'sender', 'recipient', 'content', 'timestamp', 'track']
     
-
+    def to_representation(self, instance):
+        # Get the original serialized data
+        data = super().to_representation(instance)
+        
+        # Pop the 'sender' field and nest it as 'sender' -> 'username'
+        sender = data.pop('sender', None)
+        if sender:
+            data['sender'] = {'username': sender}  # Nest sender inside a dictionary with key 'username'
+        
+        return data
+    
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
