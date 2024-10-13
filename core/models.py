@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class Track(models.Model):
@@ -17,7 +18,7 @@ class Track(models.Model):
     genre = models.JSONField(null=True, blank=True)
     share_url = models.URLField(max_length=500, null=True, blank=True)  # URL to share the track
     license_url = models.URLField(max_length=500, null=True, blank=True)  # License for commercial use
-
+    likes = models.ManyToManyField(User, related_name='liked_tracks', blank=True)
     def __str__(self):
         return self.track_title
     
