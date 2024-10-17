@@ -168,3 +168,6 @@ cython_debug/
 #.idea/
 
 super_secret.py
+
+.idea/
+conda-meta/
