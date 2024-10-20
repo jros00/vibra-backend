@@ -1,29 +1,42 @@
-from django.shortcuts import render
-
-# Create your views here. Define what is going to happen if someone requests something.
-
-# Implement here the numbers of likes showing on profile
-
-#Implement 2 diff functions: 1 retrieve (get the return) and 1 list function (return all the liked songs, and sort by most recently liked)
-
 from django.shortcuts import render, get_object_or_404
 from .models import Profile
+from rest_framework.views import APIView
+from rest_framework.request import Request
+from rest_framework.response import Response
+from .serializers import ProfileSerializer
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 
-# Displaying the profile page and liked tracks
-def profile_view(request, username):
-    user_profile = get_object_or_404(Profile, user__username=username)
-    liked_tracks = user_profile.user.liked_tracks.all().order_by('-liked_date')
-    return render(request, 'profile.html', {
-        'user_profile': user_profile,
-        'liked_tracks': liked_tracks,
-        'followers_count': user_profile.followers_count(),
-        'following_count': user_profile.following_count(),
-    })
+class ProfileView(APIView):  # Use APIView for better error handling
+    def get(self, request: Request, username=None):  # Use username instead of pk
+        print(f"Fetching profile for {username}")  # Add this to check
+        try:
+            # Fetch profile by username
+            profile = Profile.objects.get(user__username=username)
+        except Profile.DoesNotExist:
+            return Response('Profile does not exist', status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ProfileSerializer(profile)  # Serialize the profile data
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 # Handling the biography edit
-def edit_biography_view(request):
-    if request.method == 'POST':
-        bio = request.POST.get('biography')
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
+
+class EditBiographyView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        print("POST request received")
+        bio = request.data.get('biography')
+        if not bio:
+            return Response({"error": "Biography cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update the user's biography
         request.user.profile.biography = bio
         request.user.profile.save()
-    return render(request, 'edit_profile.html', {'profile': request.user.profile})
+        return Response({"message": "Biography updated successfully"}, status=status.HTTP_200_OK)
+

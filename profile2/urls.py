@@ -1,8 +1,7 @@
-# connect urls with views
 from django.urls import path
-from .views import profile_view, edit_biography_view
+from .views import ProfileView, EditBiographyView
 
 urlpatterns = [
-    path('<str:username>/', profile_view, name='profile'),
-    path('edit/', edit_biography_view, name='edit_biography'),
+    path('<str:username>/', ProfileView.as_view(), name='profile-view'),  # View profile by username
+    path('profile/edit/', EditBiographyView.as_view(), name='edit-biography'),    # Edit biography
 ]
