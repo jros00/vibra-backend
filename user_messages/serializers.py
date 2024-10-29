@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Message, MessageGroup
 from django.contrib.auth.models import User
 from core.serializers import TrackSerializer
+from profile2.models import Profile
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -13,15 +14,19 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = ['id', 'sender', 'recipient', 'content', 'timestamp', 'track']
     
+    def get_sender(self, instance):
+        request = self.context.get('request')
+        user = instance.sender
+        profile_picture_url = Profile.objects.get(user=user).profile_picture.url
+        absolute_url = request.build_absolute_uri(profile_picture_url) if request else profile_picture_url
+        return {
+            'username': user.username,
+            'profile_picture': absolute_url
+        }
+
     def to_representation(self, instance):
-        # Get the original serialized data
         data = super().to_representation(instance)
-        
-        # Pop the 'sender' field and nest it as 'sender' -> 'username'
-        sender = data.pop('sender', None)
-        if sender:
-            data['sender'] = {'username': sender}  # Nest sender inside a dictionary with key 'username'
-        
+        data['sender'] = self.get_sender(instance)
         return data
     
 class UserSerializer(serializers.ModelSerializer):

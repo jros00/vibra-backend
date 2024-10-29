@@ -20,7 +20,7 @@ class MessagePage(APIView):
         messages = Message.objects.filter(recipient=message_group).order_by('timestamp')
         
         # Serialize and return the messages
-        serializer = MessageSerializer(messages, many=True)
+        serializer = MessageSerializer(messages, many=True, context={'request': request})
         return Response({
             'group_name': message_group.group_name, 
             'messages': serializer.data

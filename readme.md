@@ -2,7 +2,7 @@
 
 ## Installation Process (IMPORTANT):
     
-### 1. Install dependencies: `
+### 1. Install dependencies: 
         
         python -m venv .venv
         source .venv/bin/activate
@@ -19,6 +19,10 @@
     
         python manage.py fetch_songs_from_jamendo
         python manage.py load_chats
+
+        NEW UPDATE in load_chats, to be able to run the script without deleting the entire database, 
+        run `python manage.py remove_db`. This will only remove user related content. After that, run 
+        `python manage.py load_chats` as usual to apply the latest updates. 
 
 ### 4. To START the server
 
