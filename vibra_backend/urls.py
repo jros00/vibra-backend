@@ -34,6 +34,7 @@ urlpatterns = [
     path('users/', UserListView.as_view(), name='user-list'),
     path('login/', LoginView.as_view({'post': 'create', 'get': 'retrieve'}), name='login_view'),
     path('notifications/', NotificationView.as_view(), name='notifications'),
+    path('profile/', include('profile2.urls')),
 ]
 
 if settings.DEBUG:

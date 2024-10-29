@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'notifications',
     'user_messages',
     'login',
+    'profile2'
 ]
 
 MIDDLEWARE = [
@@ -157,7 +158,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.JSONParser',
-    )
+    ),
 }
 
 ALLOWED_HOSTS = [my_ip, 'localhost', '127.0.0.1']
