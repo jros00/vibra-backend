@@ -20,6 +20,7 @@ class MessageSerializer(serializers.ModelSerializer):
         profile_picture_url = Profile.objects.get(user=user).profile_picture.url
         absolute_url = request.build_absolute_uri(profile_picture_url) if request else profile_picture_url
         return {
+            'id': user.id,
             'username': user.username,
             'profile_picture': absolute_url
         }
@@ -40,10 +41,11 @@ class MessageGroupSerializer(serializers.ModelSerializer):
     participants = serializers.SerializerMethodField()  # Combined creator + members
     latest_message = serializers.SerializerMethodField() 
     created = serializers.DateTimeField(source='timestamp')
+    group_picture = serializers.SerializerMethodField()
     
     class Meta:
         model = MessageGroup
-        fields = ['id', 'group_name', 'creator', 'participants', 'created', 'latest_message']  # Include creator and participants
+        fields = ['id', 'group_name', 'creator', 'participants', 'created', 'latest_message', 'group_picture']  # Include creator and participants
 
     def get_participants(self, obj):
         # Serialize the creator and members
@@ -58,3 +60,9 @@ class MessageGroupSerializer(serializers.ModelSerializer):
         if latest_message:
             return MessageSerializer(latest_message).data
         return None
+    
+    def get_group_picture(self, obj):
+        request = self.context.get('request')
+        group_picture_url = obj.group_picture.url
+        absolute_url = request.build_absolute_uri(group_picture_url) if request else group_picture_url
+        return absolute_url

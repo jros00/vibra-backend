@@ -16,7 +16,7 @@ class ProfileView(APIView):  # Use APIView for better error handling
         except Profile.DoesNotExist:
             return Response('Profile does not exist', status=status.HTTP_404_NOT_FOUND)
 
-        serializer = ProfileSerializer(profile)  # Serialize the profile data
+        serializer = ProfileSerializer(profile, context={'request': request})  # Serialize the profile data
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 # Handling the biography edit

@@ -12,11 +12,13 @@ class ProfileSerializer(serializers.Serializer):
     followers = serializers.SerializerMethodField()
     following = serializers.SerializerMethodField()
     liked_tracks = serializers.SerializerMethodField()
+    id = serializers.IntegerField(source='user.id', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
 
 
     class Meta:
         model = Profile
-        fields = ['username', 'first_name', 'last_name', 'profile_picture', 'biography', 'followers', 'following',
+        fields = ['id', 'username', 'first_name', 'last_name', 'profile_picture', 'biography', 'followers', 'following',
                   'liked_tracks']
 
     def get_followers(self, obj):
@@ -33,3 +35,9 @@ class ProfileSerializer(serializers.Serializer):
         # Use TrackSerializer to serialize the liked tracks
         serializer = TrackSerializer(liked_tracks, many=True)
         return serializer.data  # Return serialized liked tracks
+    
+    def get_profile_picture(self, obj):
+        request = self.context.get('request')
+        profile_picture_url = Profile.objects.get(user=self.id).profile_picture.url
+        absolute_url = request.build_absolute_uri(profile_picture_url) if request else profile_picture_url
+        return absolute_url

@@ -31,15 +31,17 @@ class Command(BaseCommand):
             'Have you listened to this?',
             "Don't miss this out!",
         ]
-        
-        for username in usernames:
+        bio_path = 'media/bios.csv'
+        df = pd.read_csv(bio_path, encoding='utf-8')
+        for ind, username in enumerate(usernames):
             user = User.objects.create_user(username=username, password='password123')
             profile = Profile.objects.get(user=user)
             profile_picture_path = os.path.join('media/profile_pictures', f'{user}.jpg')
             
             with open(profile_picture_path, 'rb') as image_file:
                 profile.profile_picture.save(f'{username}.jpg', File(image_file), save=True)
-
+            profile.biography = df['Bio'][ind]
+            profile.save()
         all_users = list(User.objects.all())
             
         for genre, group_name in group_attributes.items():
@@ -53,6 +55,11 @@ class Command(BaseCommand):
             except pd.errors.EmptyDataError:
                 print(f"Warning: {conversations_path} is empty or not properly formatted.")
                 continue
+            group_picture_path = os.path.join('media/group_pictures', f'{genre}.jpg')
+            print('conversations_path', conversations_path)
+            with open(group_picture_path, 'rb') as image_file:
+                group.group_picture.save(f'{genre}.jpg', File(image_file), save=True)
+                
             all_tracks = Track.objects.all()
             tracks_within_genre = [track for track in all_tracks if genre in track.genre]
             

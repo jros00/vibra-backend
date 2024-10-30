@@ -9,6 +9,7 @@ class MessageGroup(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_message_groups')
     members = models.ManyToManyField(User, related_name='joined_message_groups')
     timestamp = models.DateTimeField(auto_now_add=True)
+    group_picture = models.ImageField(upload_to='group_pics/', default='default.jpg')
 
 
 class Message(models.Model):

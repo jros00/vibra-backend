@@ -57,7 +57,7 @@ class MessagePage(APIView):
 
 class ChatListPage(APIView):
     
-    def get(self, request):
+    def get(self, request: Request):
         user = request.user  # Get the logged-in user
         
         # Filter groups where the user is either the creator or a member
@@ -66,7 +66,7 @@ class ChatListPage(APIView):
         ).distinct().order_by('timestamp')  # Order the groups by timestamp
         
         # Use the MessageGroupSerializer to serialize the groups
-        serializer = MessageGroupSerializer(chat_groups, many=True)
+        serializer = MessageGroupSerializer(chat_groups, many=True, context={'request': request})
         
         # Return the serialized data
         return Response(serializer.data, status=status.HTTP_200_OK)
