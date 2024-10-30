@@ -4,6 +4,7 @@
 *.rdb
 
 media/profile_pics/
+media/group_pics/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
