@@ -20,6 +20,7 @@ class MessageSerializer(serializers.ModelSerializer):
         profile_picture_url = Profile.objects.get(user=user).profile_picture.url
         absolute_url = request.build_absolute_uri(profile_picture_url) if request else profile_picture_url
         return {
+            'id': user.id,
             'username': user.username,
             'profile_picture': absolute_url
         }
