@@ -1,12 +1,10 @@
 from django.db import models
-
-# Create your models here. Create SQL tables. Specific models for the profile app.
-# Django has built-in functions to create users, but it lacks some features like profile picture etc, auth_user is the name of the table
-
-from django.contrib.auth.models import User #It has some features already like the name, email password
+from django.contrib.auth.models import User
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    taste_profile_title = models.CharField(max_length=100, blank=True, null=True)
+    taste_profile_color = models.CharField(max_length=7, blank=True, null=True)  # e.g., "#32CD32"
     profile_picture = models.ImageField(upload_to='profile_pics/', default='default.jpg')
     biography = models.TextField(max_length=500, blank=True)
     followers = models.ManyToManyField('self', symmetrical=False, related_name='following', blank=True)

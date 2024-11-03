@@ -11,10 +11,16 @@ class ProfileView(APIView):  # Use APIView for better error handling
     def get(self, request: Request, username=None):  # Use username instead of pk
         print(f"Fetching profile for {username}")  # Add this to check
         try:
+            print("Trying....")
             # Fetch profile by username
             profile = Profile.objects.get(user__username=username)
+            print(profile)
         except Profile.DoesNotExist:
+            print("Failing....")
             return Response('Profile does not exist', status=status.HTTP_404_NOT_FOUND)
+        
+        print(f"Taste Profile Color: {profile.taste_profile_color}, Title: {profile.taste_profile_title}")
+
 
         serializer = ProfileSerializer(profile, context={'request': request})  # Serialize the profile data
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -39,4 +45,3 @@ class EditBiographyView(APIView):
         request.user.profile.biography = bio
         request.user.profile.save()
         return Response({"message": "Biography updated successfully"}, status=status.HTTP_200_OK)
-

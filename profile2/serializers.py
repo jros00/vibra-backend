@@ -5,21 +5,24 @@ from core.serializers import TrackSerializer
 
 
 class ProfileSerializer(serializers.Serializer):
-    profile_picture = serializers.ImageField()  # Access the profile picture from Profile model
-    first_name = serializers.CharField(source='user.first_name', read_only=True)  # Access the first name from the User model
-    last_name = serializers.CharField(source='user.last_name', read_only=True)  # Access the last name from the User model
+    profile_picture = serializers.ImageField()
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
     biography = serializers.CharField(required=False, allow_blank=True)
     followers = serializers.SerializerMethodField()
     following = serializers.SerializerMethodField()
     liked_tracks = serializers.SerializerMethodField()
     id = serializers.IntegerField(source='user.id', read_only=True)
     username = serializers.CharField(source='user.username', read_only=True)
-
+    taste_profile_color = serializers.CharField(read_only=True)
+    taste_profile_title = serializers.CharField(read_only=True)
 
     class Meta:
         model = Profile
-        fields = ['id', 'username', 'first_name', 'last_name', 'profile_picture', 'biography', 'followers', 'following',
-                  'liked_tracks']
+        fields = [
+            'id', 'username', 'first_name', 'last_name', 'profile_picture', 'biography',
+            'followers', 'following', 'liked_tracks', 'taste_profile_color', 'taste_profile_title'
+        ]
 
     def get_followers(self, obj):
         return obj.followers_count()
@@ -27,17 +30,23 @@ class ProfileSerializer(serializers.Serializer):
     def get_following(self, obj):
         return obj.following_count()
 
-    def get_liked_tracks(self, obj):  # Corrected argument from 'data' to 'obj'
-        user = obj.user  # Access the user from the Profile instance
-        # Fetch UserPreferences where the user liked tracks, ordered by most recent
+    def get_liked_tracks(self, obj):
+        user = obj.user
         user_preferences = UserPreference.objects.filter(user=user, preference='like').order_by('-timestamp')
-        liked_tracks = [pref.track for pref in user_preferences]  # Extract tracks from preferences
-        # Use TrackSerializer to serialize the liked tracks
+        liked_tracks = [pref.track for pref in user_preferences]
         serializer = TrackSerializer(liked_tracks, many=True)
-        return serializer.data  # Return serialized liked tracks
-    
+        return serializer.data
+
     def get_profile_picture(self, obj):
         request = self.context.get('request')
-        profile_picture_url = Profile.objects.get(user=self.id).profile_picture.url
+        profile_picture_url = obj.profile_picture.url
         absolute_url = request.build_absolute_uri(profile_picture_url) if request else profile_picture_url
         return absolute_url
+
+    def get_taste_profile_color(self, obj):
+        # Return the color directly from the profile's taste_profile_color field
+        return obj.taste_profile_color
+
+    def get_taste_profile_title(self, obj):
+        # Return the title directly from the profile's taste_profile_title field
+        return obj.taste_profile_title
