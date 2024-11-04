@@ -18,14 +18,6 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         usernames = ['Emilia', 'Johannes', 'Hugo', 'Oscar', 'Laura']
         
-        taste_profiles = [
-            {'username': 'Emilia', 'title': 'House Mouse', 'color_code': '#32CD32'},
-            {'username': 'Johannes', 'title': 'Electro King', 'color_code': '#FF4500'},
-            {'username': 'Hugo', 'title': 'Hip Hop Hero', 'color_code': '#FFD700'},
-            {'username': 'Oscar', 'title': 'Chill Out Champ', 'color_code': '#1E90FF'},
-            {'username': 'Laura', 'title': 'Electronic Empress', 'color_code': '#8A2BE2'},
-        ]
-        
         group_attributes = {
             'house': 'The House Arrest Crew',
             'electronic': 'The Electrolytes',
@@ -39,6 +31,19 @@ class Command(BaseCommand):
             'Have you listened to this?',
             "Don't miss this out!",
         ]
+        bio_path = 'media/bios.csv'
+        df = pd.read_csv(bio_path, encoding='utf-8')
+
+        for ind, username in enumerate(usernames):
+            user = User.objects.create_user(username=username, password='password123')
+            profile = Profile.objects.get(user=user)
+            profile_picture_path = os.path.join('media/profile_pictures', f'{user}.jpg')
+            
+            with open(profile_picture_path, 'rb') as image_file:
+                profile.profile_picture.save(f'{username}.jpg', File(image_file), save=True)
+            profile.biography = df['Bio'][ind]
+            profile.save()
+        all_users = list(User.objects.all())
 
         # Define taste profile data to be assigned to specific users
         taste_profiles = [
@@ -49,29 +54,13 @@ class Command(BaseCommand):
             {'username': 'Laura', 'title': 'Electronic Empress', 'color_code': '#8A2BE2'},
         ]
 
-        bio_path = 'media/bios.csv'
-        df = pd.read_csv(bio_path, encoding='utf-8')
-
-        for username, taste_profile in zip(usernames, taste_profiles):
-    # Create the user
-            user, created = User.objects.get_or_create(username=username, defaults={'password': 'password123'})
-    
-    # Update the user's profile
-            profile, created = Profile.objects.get_or_create(user=user)
-            profile.biography = df['Bio'][usernames.index(username)]  # Adjust if necessary
+        # Associate taste profile title and color code with each user profile
+        for taste_profile in taste_profiles:
+            user = User.objects.get(username=taste_profile['username'])
+            profile = Profile.objects.get(user=user)
             profile.taste_profile_title = taste_profile['title']
             profile.taste_profile_color = taste_profile['color_code']
-    
-    # Save profile picture if it doesn't exist
-            profile_picture_path = os.path.join('media/profile_pictures', f'{username}.jpg')
-            if not profile.profile_picture:
-                with open(profile_picture_path, 'rb') as image_file:
-                    profile.profile_picture.save(f'{username}.jpg', File(image_file), save=True)
-    
             profile.save()
-            self.stdout.write(self.style.SUCCESS(f"Profile for {user.username} created successfully."))
-        
-        all_users = list(User.objects.all())
             
         for genre, group_name in group_attributes.items():
             creator = choice(all_users)
@@ -104,11 +93,3 @@ class Command(BaseCommand):
                 sender = choice(all_users)
                 content = message
                 Message.objects.create(sender=sender, recipient=group, content=message)
-        
-        
-        
-            
-        
-        
-        
-            

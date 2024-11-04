@@ -13,7 +13,7 @@ class LoginView(viewsets.ViewSet):
         username = 'user1'
         
         return self.create_user(username, request)
-        
+ 
     def create(self, request: Request):
         username = request.data.get('username')
         
