@@ -11,6 +11,11 @@
         brew install ffmpeg
 
 ### 2. Run this ONCE (sets up the initial db schema in sqllite): 
+
+        First set up a file called super_secret.py under the main folder.
+        Add a string variable: my_ip = ""
+        The string can be empty for installation, but you should save your
+        IP address in this variable when running the server. 
         
         python manage.py makemigrations
         python manage.py migrate
